@@ -2419,8 +2419,8 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     help_menu.show()
 
     xbm_menu = gtk.ImageMenuItem('_XBM Editor')
-    xbm_menu.connect("activate", self.open_xbm_editor)
-    #xbm_menu.connect("activate", os.system('python xbm-editor'))
+    #xbm_menu.connect("activate", self.open_xbm_editor)
+    xbm_menu.connect("activate", os.system('python xbm-editor'))
     xbm_menu.add_accelerator("activate",accel_group,ord('x'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
     #xbm_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
 
@@ -2544,12 +2544,9 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
   def main(self):
     gtk.main()
 
-  #def open_xbm_editor(self,*args):
-  #  editor = XBMWindow()
-  #  editor.callback = self.reconfigure
-
   def open_xbm_editor(self,*args):
-    os.system('./xbm-editor &')
+    editor = XBMWindow()
+    editor.callback = self.reconfigure
 
 def start_fuse(fuse_obj,path):
   fuse_obj.main(['',path])
@@ -3346,18 +3343,18 @@ Images will be saved along the themerc file.
 
 
 if __name__ == "__main__":
-  obt = ObTheme()
-  fusedir = obt.preview_themerc_dir
-  if not obt.preview_dir_is_mounted():
-    if os.fork() == 0:
-      fs = SimpleDir()
-      if not os.path.exists(fusedir):
-        os.makedirs(fusedir)
-      clear_dir(fusedir)
-      fs.main([sys.argv[0],fusedir])
-    else:
-      obt.main()
-  else:
-    obt.main()
-#  xbm = XBMWindow()
-#  xbm.main()
+#  obt = ObTheme()
+#  fusedir = obt.preview_themerc_dir
+#  if not obt.preview_dir_is_mounted():
+#    if os.fork() == 0:
+#      fs = SimpleDir()
+#      if not os.path.exists(fusedir):
+#        os.makedirs(fusedir)
+#      clear_dir(fusedir)
+#      fs.main([sys.argv[0],fusedir])
+#    else:
+#      obt.main()
+#  else:
+#    obt.main()
+  xbm = XBMWindow()
+  xbm.main()

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
 # Copyright (C) 2009  Xyne
@@ -19,6 +20,9 @@
 # METADATA
 # Version: 0.7
 VERSION = '0.7'
+
+
+from __future__ import absolute_import
 
 import pygtk
 pygtk.require('2.0')

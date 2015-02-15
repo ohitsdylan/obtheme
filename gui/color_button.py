@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+
 from utils.color_utils import (color_to_str, str_to_color)
 import gtk
 

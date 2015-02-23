@@ -53,11 +53,245 @@ from utils.fuse_utils import SimpleDir
 gobject.threads_init()
 gtk.gdk.threads_init()
 
-
 class ObTheme:
 
-    def display_about(self, *args):
-        about_msg = "ObTheme %s\n\n GTK+ Openbox theme editor \n\nCopyright \302\251 2009 Xyne " % VERSION
+    def __init__(self):
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_title("ObTheme")
+        self.window.set_default_size(1100, 700)
+        self.window.connect("destroy", self.destroy)
+        self.window.connect("delete_event", self.delete_event)
+        self.window.set_position(gtk.WIN_POS_CENTER)
+
+        accel_group = gtk.AccelGroup()
+        self.window.add_accel_group(accel_group)
+
+        self.preview_themerc_dir = os.getenv('HOME') + '/.themes/obtheme/openbox-3'
+        config_home = os.getenv('XDG_CONFIG_HOME')
+        if not config_home:
+            config_home = os.getenv('HOME') + '/.config'
+            logging.error("Error: the environment variable \"XDG_CONFIG_HOME\" is not set\nDefaulting to {}.\n".format(config_home))
+        self.openbox_config_path = config_home + '/openbox/lubuntu-rc.xml'
+
+        self.theme = Theme()
+        self.theme.callback = self.refresh
+
+        self.selection = None
+        self.previous_theme = None
+        self.file_name = None
+        self.unsaved = False
+        self.preview_mode = False
+        self.themerc = None
+
+        file_menu_open = gtk.ImageMenuItem(gtk.STOCK_OPEN)
+        file_menu_open.connect("activate", self.open_theme, 'open')
+        file_menu_open.add_accelerator("activate",
+                                       accel_group, ord('o'),
+                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        file_menu_open.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU))
+
+        file_menu_save = gtk.ImageMenuItem(gtk.STOCK_SAVE)
+        file_menu_save.connect("activate", self.save_theme, 'save')
+        file_menu_save.add_accelerator("activate",
+                                       accel_group, ord('s'),
+                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        file_menu_save.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE, gtk.ICON_SIZE_MENU))
+
+        file_menu_save_as = gtk.ImageMenuItem(gtk.STOCK_SAVE_AS)
+        file_menu_save_as.connect("activate", self.save_theme, 'save as')
+        file_menu_save_as.add_accelerator("activate",
+                                          accel_group, ord('s'),
+                                          (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK), gtk.ACCEL_VISIBLE)
+        file_menu_save_as.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+
+        # file_menu_install_as = gtk.ImageMenuItem('Install As...')
+        # file_menu_install_as.connect("activate", self.install,'install as')
+        # file_menu_install_as.add_accelerator("activate",accel_group,ord('i'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
+        # file_menu_install_as.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+
+        # file_menu_import = gtk.ImageMenuItem('_Import...')
+        # file_menu_import.connect("activate", self.open_theme, 'import')
+        # file_menu_import.add_accelerator("activate",accel_group,ord('i'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
+        # file_menu_import.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+
+        file_menu_separator = gtk.SeparatorMenuItem()
+
+        file_menu_quit = gtk.ImageMenuItem(gtk.STOCK_QUIT)
+        file_menu_quit.connect("activate", self.quit_app)
+        # file_menu_quit.add_accelerator("activate",
+        #                                accel_group, ord('q'),
+        #                                gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        # file_menu_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
+
+        file_submenu = gtk.Menu()
+        file_submenu.append(file_menu_open)
+        file_submenu.append(file_menu_save)
+        file_submenu.append(file_menu_save_as)
+        # file_submenu.append(file_menu_install_as)
+        # file_submenu.append(file_menu_import)
+        file_submenu.append(file_menu_separator)
+        file_submenu.append(file_menu_quit)
+        file_submenu.show_all()
+
+        file_menu = gtk.ImageMenuItem('_File')
+        file_menu.set_submenu(file_submenu)
+        file_menu.show()
+
+        theme_menu_import = gtk.ImageMenuItem('_Import...')
+        theme_menu_import.connect("activate", self.open_theme, 'import')
+        theme_menu_import.add_accelerator("activate", accel_group, ord('i'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        # theme_menu_import.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
+
+        theme_menu_preview = gtk.CheckMenuItem('_Preview')
+        theme_menu_preview.connect("toggled", self.toggle_preview_mode)
+        theme_menu_preview.add_accelerator("activate", accel_group, ord('p'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        # theme_menu_preview.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
+        self.preview_mode_checkbox = theme_menu_preview
+
+        # theme_menu_restore = gtk.ImageMenuItem('_Restore')
+        # theme_menu_restore.connect("activate", self.restore)
+        # theme_menu_restore.add_accelerator("activate",accel_group,ord('r'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
+        # theme_menu_restore.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
+
+        theme_submenu = gtk.Menu()
+        theme_submenu.append(theme_menu_import)
+        theme_submenu.append(theme_menu_preview)
+        # theme_submenu.append(theme_menu_restore)
+        theme_submenu.show_all()
+
+        theme_menu = gtk.ImageMenuItem("_Theme")
+        theme_menu.set_submenu(theme_submenu)
+        theme_menu.show()
+
+        info_menu = gtk.ImageMenuItem(gtk.STOCK_INFO)
+        info_menu.connect("activate", self.display_help)
+        info_menu.add_accelerator("activate", accel_group, ord('h'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        info_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_MENU))
+
+        about_menu = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
+        about_menu.connect("activate", self.display_about)
+        # about_menu.add_accelerator("activate",accel_group,ord('h'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
+        about_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+
+        help_submenu = gtk.Menu()
+        help_submenu.append(info_menu)
+        help_submenu.append(about_menu)
+        help_submenu.show_all()
+
+        help_menu = gtk.ImageMenuItem(gtk.STOCK_HELP)
+        help_menu.set_submenu(help_submenu)
+        help_menu.show()
+
+        xbm_menu = gtk.ImageMenuItem('_XBM Editor')
+        xbm_menu.connect("activate", self.open_xbm_editor)
+        # xbm_menu.connect("activate", os.system('python xbm-editor'))
+        xbm_menu.add_accelerator("activate", accel_group, ord('x'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        # xbm_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+
+        tools_submenu = gtk.Menu()
+        tools_submenu.append(xbm_menu)
+        tools_submenu.show_all()
+
+        tools_menu = gtk.ImageMenuItem("Too_ls")
+        tools_menu.set_submenu(tools_submenu)
+        tools_menu.show()
+
+        menu_bar = gtk.MenuBar()
+        menu_bar.append(file_menu)
+        menu_bar.append(theme_menu)
+        menu_bar.append(tools_menu)
+        menu_bar.append(help_menu)
+
+        self.frames = {}
+        integer = IntegerFrame()
+        self.frames['integer'] = integer
+        integer.callback = self.update
+
+        color = ColorFrame()
+        self.frames['color'] = color
+        color.callback = self.update
+
+        text_shadow_string = TextShadowStringFrame()
+        self.frames['text shadow string'] = text_shadow_string
+        text_shadow_string.callback = self.update
+
+        justification = JustificationFrame()
+        self.frames['justification'] = justification
+        justification.callback = self.update
+
+        texture = TextureFrame()
+        self.frames['texture'] = texture
+        texture.callback = self.update
+
+        infopanel = gtk.ScrolledWindow()
+        infopanel.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        infolabel = gtk.Label(' information:')
+        infolabel.set_alignment(0, 1)
+        self.info = gtk.TextView()
+        self.info.set_wrap_mode(gtk.WRAP_WORD)
+        self.info.set_left_margin(5)
+        self.info.set_right_margin(5)
+        self.info.set_size_request(400, 50)
+        self.info.set_editable(False)
+        infopanel.add(self.info)
+
+        theme_element_selector = ThemeElementSelector()
+        theme_element_selector.callback = self.select
+        themelist = ThemeFileSelector()
+        themelist.callback = self.open_from_list
+
+        hpane = gtk.HPaned()
+        hpane.add1(theme_element_selector)
+        hpane.add2(themelist)
+        hpane.show_all()
+
+        vpane = gtk.VPaned()
+        vpane.add1(infopanel)
+        vpane.add2(hpane)
+        vpane.show_all()
+
+        table = gtk.Table(rows=7, columns=4, homogeneous=False)
+        i = 0
+        j = 0
+        table.attach(integer, i, i+2, j, j+1)
+        i += 2
+        table.attach(texture, i, i+1, j, j+3)
+        i = 0
+        j += 1
+        table.attach(color, i, i+1, j, j+1)
+        i += 1
+        table.attach(justification, i, i+1, j, j+1)
+        i = 0
+        j += 1
+        table.attach(text_shadow_string, i, i+2, j, j+1)
+        table.show_all()
+
+        hbox = gtk.HBox()
+        hbox.pack_start(table, False, False, 2)
+        hbox.pack_start(self.theme.palette, True, True, 2)
+        hbox.show_all()
+
+        vbox = gtk.VBox()
+        vbox.pack_start(menu_bar, False, False, 2)
+        vbox.pack_start(hbox, False, False, 2)
+        vbox.pack_start(infolabel, False, False, 2)
+        vbox.pack_start(vpane, True, True, 2)
+        vbox.show_all()
+
+        self.select(None)
+        self.window.add(vbox)
+        self.window.show_all()
+        self.window.show()
+
+    def quit_app(self, *args):
+        self.window.destroy()
+        # TODO serve?
+        # while gtk.events_pending():
+        #     gtk.main_iteration(False)
+        gtk.main_quit()
+
+    def display_about(self):
+        about_msg = "ObTheme {}\n\n GTK+ Openbox theme editor \n\nCopyright \302\251 2009 Xyne ".format(VERSION)
 
         label = gtk.Label(about_msg)
         label.set_justify(gtk.JUSTIFY_CENTER)
@@ -328,233 +562,6 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
             self.previous_theme = None
         self.preview_mode = False
         self.preview_mode_checkbox.set_active(False)
-
-    def __init__(self):
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("ObTheme")
-        self.window.connect("destroy", self.destroy)
-        self.window.connect("delete_event", self.delete_event)
-        self.window.set_position(gtk.WIN_POS_CENTER)
-
-        accel_group = gtk.AccelGroup()
-        self.window.add_accel_group(accel_group)
-
-        self.preview_themerc_dir = os.getenv('HOME') + '/.themes/obtheme/openbox-3'
-        config_home = os.getenv('XDG_CONFIG_HOME')
-        if not config_home:
-            config_home = os.getenv('HOME') + '/.config'
-            sys.stderr.write("Error: the environment variable \"XDG_CONFIG_HOME\" is not set\nDefaulting to %s.\n" % config_home)
-        self.openbox_config_path = config_home + '/openbox/lubuntu-rc.xml'
-
-        self.theme = Theme()
-        self.theme.callback = self.refresh
-
-        self.selection = None
-        self.previous_theme = None
-        self.file_name = None
-        self.unsaved = False
-        self.preview_mode = False
-        self.themerc = None
-
-        file_menu_open = gtk.ImageMenuItem(gtk.STOCK_OPEN)
-        file_menu_open.connect("activate", self.open_theme, 'open')
-        file_menu_open.add_accelerator("activate",
-                                       accel_group, ord('o'),
-                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        file_menu_open.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU))
-
-        file_menu_save = gtk.ImageMenuItem(gtk.STOCK_SAVE)
-        file_menu_save.connect("activate", self.save_theme, 'save')
-        file_menu_save.add_accelerator("activate",
-                                       accel_group, ord('s'),
-                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        file_menu_save.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE, gtk.ICON_SIZE_MENU))
-
-        file_menu_save_as = gtk.ImageMenuItem(gtk.STOCK_SAVE_AS)
-        file_menu_save_as.connect("activate", self.save_theme, 'save as')
-        file_menu_save_as.add_accelerator("activate",
-                                          accel_group, ord('s'),
-                                          (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK), gtk.ACCEL_VISIBLE)
-        file_menu_save_as.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
-
-        # file_menu_install_as = gtk.ImageMenuItem('Install As...')
-        # file_menu_install_as.connect("activate", self.install,'install as')
-        # file_menu_install_as.add_accelerator("activate",accel_group,ord('i'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-        # file_menu_install_as.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
-
-        # file_menu_import = gtk.ImageMenuItem('_Import...')
-        # file_menu_import.connect("activate", self.open_theme, 'import')
-        # file_menu_import.add_accelerator("activate",accel_group,ord('i'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-        # file_menu_import.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
-
-        file_menu_separator = gtk.SeparatorMenuItem()
-
-        file_menu_quit = gtk.ImageMenuItem(gtk.STOCK_QUIT)
-        file_menu_quit.connect("activate", gtk.main_quit)
-        # file_menu_quit.add_accelerator("activate",
-        #                                accel_group, ord('q'),
-        #                                gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        # file_menu_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
-
-        file_submenu = gtk.Menu()
-        file_submenu.append(file_menu_open)
-        file_submenu.append(file_menu_save)
-        file_submenu.append(file_menu_save_as)
-        # file_submenu.append(file_menu_install_as)
-        # file_submenu.append(file_menu_import)
-        file_submenu.append(file_menu_separator)
-        file_submenu.append(file_menu_quit)
-        file_submenu.show_all()
-
-        file_menu = gtk.ImageMenuItem('_File')
-        file_menu.set_submenu(file_submenu)
-        file_menu.show()
-
-        theme_menu_import = gtk.ImageMenuItem('_Import...')
-        theme_menu_import.connect("activate", self.open_theme, 'import')
-        theme_menu_import.add_accelerator("activate", accel_group, ord('i'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        # theme_menu_import.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
-
-        theme_menu_preview = gtk.CheckMenuItem('_Preview')
-        theme_menu_preview.connect("toggled", self.toggle_preview_mode)
-        theme_menu_preview.add_accelerator("activate", accel_group, ord('p'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        # theme_menu_preview.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
-        self.preview_mode_checkbox = theme_menu_preview
-
-        # theme_menu_restore = gtk.ImageMenuItem('_Restore')
-        # theme_menu_restore.connect("activate", self.restore)
-        # theme_menu_restore.add_accelerator("activate",accel_group,ord('r'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-        # theme_menu_restore.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
-
-        theme_submenu = gtk.Menu()
-        theme_submenu.append(theme_menu_import)
-        theme_submenu.append(theme_menu_preview)
-        # theme_submenu.append(theme_menu_restore)
-        theme_submenu.show_all()
-
-        theme_menu = gtk.ImageMenuItem("_Theme")
-        theme_menu.set_submenu(theme_submenu)
-        theme_menu.show()
-
-        info_menu = gtk.ImageMenuItem(gtk.STOCK_INFO)
-        info_menu.connect("activate", self.display_help)
-        info_menu.add_accelerator("activate", accel_group, ord('h'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        info_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_MENU))
-
-        about_menu = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
-        about_menu.connect("activate", self.display_about)
-        # about_menu.add_accelerator("activate",accel_group,ord('h'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-        about_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
-
-        help_submenu = gtk.Menu()
-        help_submenu.append(info_menu)
-        help_submenu.append(about_menu)
-        help_submenu.show_all()
-
-        help_menu = gtk.ImageMenuItem(gtk.STOCK_HELP)
-        help_menu.set_submenu(help_submenu)
-        help_menu.show()
-
-        xbm_menu = gtk.ImageMenuItem('_XBM Editor')
-        xbm_menu.connect("activate", self.open_xbm_editor)
-        # xbm_menu.connect("activate", os.system('python xbm-editor'))
-        xbm_menu.add_accelerator("activate", accel_group, ord('x'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        # xbm_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
-
-        tools_submenu = gtk.Menu()
-        tools_submenu.append(xbm_menu)
-        tools_submenu.show_all()
-
-        tools_menu = gtk.ImageMenuItem("Too_ls")
-        tools_menu.set_submenu(tools_submenu)
-        tools_menu.show()
-
-        menu_bar = gtk.MenuBar()
-        menu_bar.append(file_menu)
-        menu_bar.append(theme_menu)
-        menu_bar.append(tools_menu)
-        menu_bar.append(help_menu)
-
-        self.frames = {}
-        integer = IntegerFrame()
-        self.frames['integer'] = integer
-        integer.callback = self.update
-
-        color = ColorFrame()
-        self.frames['color'] = color
-        color.callback = self.update
-
-        text_shadow_string = TextShadowStringFrame()
-        self.frames['text shadow string'] = text_shadow_string
-        text_shadow_string.callback = self.update
-
-        justification = JustificationFrame()
-        self.frames['justification'] = justification
-        justification.callback = self.update
-
-        texture = TextureFrame()
-        self.frames['texture'] = texture
-        texture.callback = self.update
-
-        infopanel = gtk.ScrolledWindow()
-        infopanel.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        infolabel = gtk.Label(' information:')
-        infolabel.set_alignment(0, 1)
-        self.info = gtk.TextView()
-        self.info.set_wrap_mode(gtk.WRAP_WORD)
-        self.info.set_left_margin(5)
-        self.info.set_right_margin(5)
-        self.info.set_size_request(400, 50)
-        self.info.set_editable(False)
-        infopanel.add(self.info)
-
-        theme_element_selector = ThemeElementSelector()
-        theme_element_selector.callback = self.select
-        themelist = ThemeFileSelector()
-        themelist.callback = self.open_from_list
-
-        hpane = gtk.HPaned()
-        hpane.add1(theme_element_selector)
-        hpane.add2(themelist)
-        hpane.show_all()
-
-        vpane = gtk.VPaned()
-        vpane.add1(infopanel)
-        vpane.add2(hpane)
-        vpane.show_all()
-
-        table = gtk.Table(rows=7, columns=4, homogeneous=False)
-        i = 0
-        j = 0
-        table.attach(integer, i, i+2, j, j+1)
-        i += 2
-        table.attach(texture, i, i+1, j, j+3)
-        i = 0
-        j += 1
-        table.attach(color, i, i+1, j, j+1)
-        i += 1
-        table.attach(justification, i, i+1, j, j+1)
-        i = 0
-        j += 1
-        table.attach(text_shadow_string, i, i+2, j, j+1)
-        table.show_all()
-
-        hbox = gtk.HBox()
-        hbox.pack_start(table, False, False, 2)
-        hbox.pack_start(self.theme.palette, True, True, 2)
-        hbox.show_all()
-
-        vbox = gtk.VBox()
-        vbox.pack_start(menu_bar, False, False, 2)
-        vbox.pack_start(hbox, False, False, 2)
-        vbox.pack_start(infolabel, False, False, 2)
-        vbox.pack_start(vpane, True, True, 2)
-        vbox.show_all()
-
-        self.select(None)
-        self.window.add(vbox)
-        self.window.show_all()
-        self.window.show()
 
     def unmount_preview_dir(self):
         if self.preview_dir_is_mounted():

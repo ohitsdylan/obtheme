@@ -13,45 +13,6 @@ from openbox.theme_elements import imageButtons
 
 
 class XBMWindow:
-    def display_about(self, *args):
-        about_msg = "XBM Editor %s\n\n GTK+ X BitMap editor \n\nCopyright \302\251 2009 Xyne " % VERSION
-
-        label = gtk.Label(about_msg)
-        label.set_justify(gtk.JUSTIFY_CENTER)
-
-        dialog = gtk.Dialog(None, None, gtk.DIALOG_DESTROY_WITH_PARENT, ('_Close', 1))
-        dialog.set_title("About XBM Editor")
-        dialog.vbox.pack_start(label, False, True, 10)
-        dialog.vbox.show_all()
-        response = dialog.run()
-        logging.debug(response)
-        dialog.destroy()
-
-    def display_help(self, *args):
-        help_msg = '''Left-click to set a pixel, right-click to unset it.
-
-Images will be saved along the themerc file.
-'''
-
-        textview = gtk.TextView()
-        textview.get_buffer().set_text(help_msg)
-        textview.set_editable(False)
-        textview.set_wrap_mode(gtk.WRAP_WORD)
-        textview.set_left_margin(5)
-        textview.set_right_margin(5)
-
-        textview_window = gtk.ScrolledWindow()
-        textview_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        textview_window.add(textview)
-
-        dialog = gtk.Dialog(None, None, gtk.DIALOG_DESTROY_WITH_PARENT, ('_Close', 1))
-        dialog.set_title("XBM Editor Info")
-        dialog.set_default_size(300, 250)
-        dialog.vbox.pack_start(textview_window, True, True, 5)
-        dialog.vbox.show_all()
-        response = dialog.run()
-        logging.debug(response)
-        dialog.destroy()
 
     def __init__(self):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -222,6 +183,46 @@ Images will be saved along the themerc file.
         self.window.show()
         self.editor = editor
         self.set_labels()
+
+    def display_about(self, *args):
+        about_msg = "XBM Editor %s\n\n GTK+ X BitMap editor \n\nCopyright \302\251 2009 Xyne " % VERSION
+
+        label = gtk.Label(about_msg)
+        label.set_justify(gtk.JUSTIFY_CENTER)
+
+        dialog = gtk.Dialog(None, None, gtk.DIALOG_DESTROY_WITH_PARENT, ('_Close', 1))
+        dialog.set_title("About XBM Editor")
+        dialog.vbox.pack_start(label, False, True, 10)
+        dialog.vbox.show_all()
+        response = dialog.run()
+        logging.debug(response)
+        dialog.destroy()
+
+    def display_help(self, *args):
+        help_msg = '''Left-click to set a pixel, right-click to unset it.
+
+Images will be saved along the themerc file.
+'''
+
+        textview = gtk.TextView()
+        textview.get_buffer().set_text(help_msg)
+        textview.set_editable(False)
+        textview.set_wrap_mode(gtk.WRAP_WORD)
+        textview.set_left_margin(5)
+        textview.set_right_margin(5)
+
+        textview_window = gtk.ScrolledWindow()
+        textview_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        textview_window.add(textview)
+
+        dialog = gtk.Dialog(None, None, gtk.DIALOG_DESTROY_WITH_PARENT, ('_Close', 1))
+        dialog.set_title("XBM Editor Info")
+        dialog.set_default_size(300, 250)
+        dialog.vbox.pack_start(textview_window, True, True, 5)
+        dialog.vbox.show_all()
+        response = dialog.run()
+        logging.debug(response)
+        dialog.destroy()
 
     def destroy(self, widget, data=None):
         pass

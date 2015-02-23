@@ -14,6 +14,61 @@ from utils.color_utils import str_to_color
 
 class XBMEditor(gtk.Frame):
 
+    def __init__(self, *args):
+        gtk.Frame.__init__(self, *args)
+        self.set_shadow_type(gtk.SHADOW_NONE)
+        # self.set_label_align(1,0.5)
+        # self.set_label("xbm editor")
+
+        self.bool_arr = None
+        self.on = None
+        self.off = None
+        self.width = 1
+        self.height = 1
+        self.set_size()
+        self.callback = None
+
+        self.re_width = re.compile(r'^\s*#define\s+\S+_width\s+(\d+)\s*$', re.M)
+        self.re_height = re.compile(r'^\s*#define\s+\S+_height\s+(\d+)\s*$', re.M)
+        self.re_data = re.compile(r'_bits\[\]\s*=\s*\{\s*(.*?)\s*\};', re.S)
+        self.re_split = re.compile(r'\s*,\s*', re.S)
+
+        self.hex_map = {
+            '0': '0000',
+            '1': '0001',
+            '2': '0010',
+            '3': '0011',
+            '4': '0100',
+            '5': '0101',
+            '6': '0110',
+            '7': '0111',
+            '8': '1000',
+            '9': '1001',
+            'a': '1010',
+            'b': '1011',
+            'c': '1100',
+            'd': '1101',
+            'e': '1110',
+            'f': '1111',
+        }
+
+        self.area = gtk.DrawingArea()
+        self.area.show()
+        self.area.set_events(gtk.gdk.EXPOSURE_MASK | gtk.gdk.BUTTON_PRESS_MASK)
+        self.area.connect("expose_event", self.draw_xbm)
+        self.area.connect("button_press_event", self.button_press)
+        self.area.connect("motion_notify_event", self.motion_notify)
+        self.area.set_events(gtk.gdk.EXPOSURE_MASK
+                             | gtk.gdk.BUTTON_PRESS_MASK
+                             | gtk.gdk.LEAVE_NOTIFY_MASK
+                             | gtk.gdk.POINTER_MOTION_MASK
+                             | gtk.gdk.POINTER_MOTION_HINT_MASK)
+
+        self.area.set_size_request(240, 240)
+
+        self.add(self.area)
+        self.show_all()
+
     def xbm_data_to_bool_array(self, data, width):
         bin_str = ''
         i = 0
@@ -148,61 +203,6 @@ class XBMEditor(gtk.Frame):
     def set_height(self, h):
         self.height = h
         self.set_size()
-
-    def __init__(self, *args):
-        gtk.Frame.__init__(self, *args)
-        self.set_shadow_type(gtk.SHADOW_NONE)
-        # self.set_label_align(1,0.5)
-        # self.set_label("xbm editor")
-
-        self.bool_arr = None
-        self.on = None
-        self.off = None
-        self.width = 1
-        self.height = 1
-        self.set_size()
-        self.callback = None
-
-        self.re_width = re.compile(r'^\s*#define\s+\S+_width\s+(\d+)\s*$', re.M)
-        self.re_height = re.compile(r'^\s*#define\s+\S+_height\s+(\d+)\s*$', re.M)
-        self.re_data = re.compile(r'_bits\[\]\s*=\s*\{\s*(.*?)\s*\};', re.S)
-        self.re_split = re.compile(r'\s*,\s*', re.S)
-
-        self.hex_map = {
-            '0': '0000',
-            '1': '0001',
-            '2': '0010',
-            '3': '0011',
-            '4': '0100',
-            '5': '0101',
-            '6': '0110',
-            '7': '0111',
-            '8': '1000',
-            '9': '1001',
-            'a': '1010',
-            'b': '1011',
-            'c': '1100',
-            'd': '1101',
-            'e': '1110',
-            'f': '1111',
-        }
-
-        self.area = gtk.DrawingArea()
-        self.area.show()
-        self.area.set_events(gtk.gdk.EXPOSURE_MASK | gtk.gdk.BUTTON_PRESS_MASK)
-        self.area.connect("expose_event", self.draw_xbm)
-        self.area.connect("button_press_event", self.button_press)
-        self.area.connect("motion_notify_event", self.motion_notify)
-        self.area.set_events(gtk.gdk.EXPOSURE_MASK
-                             | gtk.gdk.BUTTON_PRESS_MASK
-                             | gtk.gdk.LEAVE_NOTIFY_MASK
-                             | gtk.gdk.POINTER_MOTION_MASK
-                             | gtk.gdk.POINTER_MOTION_HINT_MASK)
-
-        self.area.set_size_request(240, 240)
-
-        self.add(self.area)
-        self.show_all()
 
     def get_pixel_dim(self, *args):
         x, y, w, h = self.area.get_allocation()

@@ -13,6 +13,160 @@ from gui.color_button import ColorButton
 
 class TextureFrame(gtk.Frame):
 
+    def __init__(self, **args):
+        gtk.Frame.__init__(self, **args)
+        self.set_shadow_type(gtk.SHADOW_NONE)
+        self.set_label_align(1, 0.5)
+        self.set_label("texture")
+        self.callback = None
+
+        self.texture = gtk.combo_box_new_text()
+        self.texture.append_text('ParentRelative')
+        self.texture.append_text('Solid')
+        self.texture.append_text('Gradient')
+        self.texture.set_active(1)
+        self.texture.connect('changed', self.update_texture)
+        self.texture.show()
+        textureLabel = gtk.Label('texture')
+        textureLabel.set_alignment(0, 0.5)
+
+        self.gradient = gtk.combo_box_new_text()
+        self.gradient.append_text('Diagonal')
+        self.gradient.append_text('CrossDiagonal')
+        self.gradient.append_text('Pyramid')
+        self.gradient.append_text('Horizontal')
+        self.gradient.append_text('MirrorHorizontal')
+        self.gradient.append_text('Vertical')
+        self.gradient.append_text('SplitVertical')
+        self.gradient.set_active(5)
+        self.gradient.connect('changed', self.update_gradient)
+        self.gradient.show()
+        gradientLabel = gtk.Label('gradient')
+        gradientLabel.set_alignment(0, 0.5)
+
+        self.color = ColorButton()
+        self.color.connect("color-set", self.update_value)
+        colorLabel = gtk.Label('color')
+        colorLabel.set_alignment(0, 0.5)
+
+        self.colorTo = ColorButton()
+        self.colorTo.connect("color-set", self.update_value)
+        colorToLabel = gtk.Label('colorTo')
+        colorToLabel.set_alignment(0, 0.5)
+
+        self.colorSplitTo = ColorButton()
+        self.colorSplitTo.connect("color-set", self.update_value)
+        self.colorSplitTo_tb = gtk.CheckButton("color.splitTo")
+        self.colorSplitTo_tb.connect("toggled", self.update_gradient)
+        self.colorSplitTo_tb.set_active(False)
+        self.colorSplitTo_tb.set_alignment(0, 0.5)
+
+        self.colorToSplitTo = ColorButton()
+        self.colorToSplitTo.connect("color-set", self.update_value)
+        self.colorToSplitTo_tb = gtk.CheckButton("colorTo.splitTo")
+        self.colorToSplitTo_tb.connect("toggled", self.update_gradient)
+        self.colorToSplitTo_tb.set_active(False)
+        self.colorToSplitTo_tb.set_alignment(0, 0.5)
+
+        self.interlaced = gtk.CheckButton("interlaced")
+        self.interlaced.connect("toggled", self.update_interlaced)
+        self.interlacedColor = ColorButton()
+        self.interlacedColor.connect("color-set", self.update_value)
+        self.interlacedColor.set_sensitive(False)
+
+        colortable = gtk.Table(rows=2, columns=2, homogeneous=False)
+        i = 0
+        colortable.attach(textureLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        colortable.attach(self.texture, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        colortable.attach(gradientLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        colortable.attach(self.gradient, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        colortable.attach(colorLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        colortable.attach(self.color, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        colortable.attach(colorToLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        colortable.attach(self.colorTo, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        colortable.attach(self.colorSplitTo_tb, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        colortable.attach(self.colorSplitTo, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+
+        i += 1
+        colortable.attach(self.colorToSplitTo_tb, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        colortable.attach(self.colorToSplitTo, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        colortable.attach(self.interlaced, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        colortable.attach(self.interlacedColor, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        colortable.show_all()
+
+        self.border = gtk.combo_box_new_text()
+        self.border.append_text('None')
+        self.border.append_text('Flat')
+        self.border.append_text('Raised')
+        self.border.append_text('Sunken')
+        self.border.set_active(2)
+        self.border.connect('changed', self.update_border)
+        borderLabel = gtk.Label('border')
+        borderLabel.set_alignment(0, 0.5)
+
+        self.bevelButton1 = gtk.RadioButton(None, "Bevel1")
+        self.bevelButton2 = gtk.RadioButton(self.bevelButton1, "Bevel2")
+        self.bevelButton1.connect("toggled", self.update_interlaced)
+
+        self.borderColor = ColorButton()
+        self.borderColor.connect("color-set", self.update_value)
+        borderColorLabel = gtk.Label('border color')
+        borderColorLabel.set_alignment(0, 0.5)
+
+        self.highlight = gtk.Adjustment(128, 0, 65535, 1, 256, 0)
+        self.shadow = gtk.Adjustment(64, 0, 256, 1, 16, 0)
+        self.highlight.connect("value_changed", self.update_value)
+        self.shadow.connect("value_changed", self.update_value)
+
+        self.highlightButton = gtk.SpinButton(self.highlight, 0, 0)
+        self.highlightButton.set_numeric(True)
+        self.highlightButton.set_digits(0)
+        highlightLabel = gtk.Label('highlight')
+        highlightLabel.set_alignment(0, 0.5)
+
+        self.shadowButton = gtk.SpinButton(self.shadow, 0, 0)
+        self.shadowButton.set_numeric(True)
+        self.shadowButton.set_digits(0)
+        shadowLabel = gtk.Label('shadow')
+        shadowLabel.set_alignment(0, 0.5)
+
+        reset = gtk.Button(label="reset")
+        reset.set_alignment(0.5, 0.5)
+        reset.connect("clicked", self.reset)
+
+        bordertable = gtk.Table(rows=2, columns=2, homogeneous=False)
+        i = 0
+        bordertable.attach(borderLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        bordertable.attach(self.border, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        bordertable.attach(borderColorLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        bordertable.attach(self.borderColor, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        bordertable.attach(highlightLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        bordertable.attach(self.highlightButton, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        bordertable.attach(shadowLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        bordertable.attach(self.shadowButton, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        bordertable.attach(self.bevelButton1, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
+        bordertable.attach(self.bevelButton2, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
+        i += 1
+        bordertable.attach(reset, 0, 2, i, i+1, FILL, FILL, 5, 0)
+        bordertable.show_all()
+
+        hbox = gtk.HBox(False, 5)
+        hbox.pack_start(colortable, False, False, 5)
+        hbox.pack_start(bordertable, False, False, 5)
+        hbox.show()
+        self.add(hbox)
+        self.update_texture()
+
     def update_value(self, *args):
         attributes = {}
         texture = self.texture.get_active_text()
@@ -246,157 +400,3 @@ class TextureFrame(gtk.Frame):
         self.shadow.set_value(64)
         self.bevelButton1.set_active(True)
         self.update_value()
-
-    def __init__(self, **args):
-        gtk.Frame.__init__(self, **args)
-        self.set_shadow_type(gtk.SHADOW_NONE)
-        self.set_label_align(1, 0.5)
-        self.set_label("texture")
-        self.callback = None
-
-        self.texture = gtk.combo_box_new_text()
-        self.texture.append_text('ParentRelative')
-        self.texture.append_text('Solid')
-        self.texture.append_text('Gradient')
-        self.texture.set_active(1)
-        self.texture.connect('changed', self.update_texture)
-        self.texture.show()
-        textureLabel = gtk.Label('texture')
-        textureLabel.set_alignment(0, 0.5)
-
-        self.gradient = gtk.combo_box_new_text()
-        self.gradient.append_text('Diagonal')
-        self.gradient.append_text('CrossDiagonal')
-        self.gradient.append_text('Pyramid')
-        self.gradient.append_text('Horizontal')
-        self.gradient.append_text('MirrorHorizontal')
-        self.gradient.append_text('Vertical')
-        self.gradient.append_text('SplitVertical')
-        self.gradient.set_active(5)
-        self.gradient.connect('changed', self.update_gradient)
-        self.gradient.show()
-        gradientLabel = gtk.Label('gradient')
-        gradientLabel.set_alignment(0, 0.5)
-
-        self.color = ColorButton()
-        self.color.connect("color-set", self.update_value)
-        colorLabel = gtk.Label('color')
-        colorLabel.set_alignment(0, 0.5)
-
-        self.colorTo = ColorButton()
-        self.colorTo.connect("color-set", self.update_value)
-        colorToLabel = gtk.Label('colorTo')
-        colorToLabel.set_alignment(0, 0.5)
-
-        self.colorSplitTo = ColorButton()
-        self.colorSplitTo.connect("color-set", self.update_value)
-        self.colorSplitTo_tb = gtk.CheckButton("color.splitTo")
-        self.colorSplitTo_tb.connect("toggled", self.update_gradient)
-        self.colorSplitTo_tb.set_active(False)
-        self.colorSplitTo_tb.set_alignment(0, 0.5)
-
-        self.colorToSplitTo = ColorButton()
-        self.colorToSplitTo.connect("color-set", self.update_value)
-        self.colorToSplitTo_tb = gtk.CheckButton("colorTo.splitTo")
-        self.colorToSplitTo_tb.connect("toggled", self.update_gradient)
-        self.colorToSplitTo_tb.set_active(False)
-        self.colorToSplitTo_tb.set_alignment(0, 0.5)
-
-        self.interlaced = gtk.CheckButton("interlaced")
-        self.interlaced.connect("toggled", self.update_interlaced)
-        self.interlacedColor = ColorButton()
-        self.interlacedColor.connect("color-set", self.update_value)
-        self.interlacedColor.set_sensitive(False)
-
-        colortable = gtk.Table(rows=2, columns=2, homogeneous=False)
-        i = 0
-        colortable.attach(textureLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        colortable.attach(self.texture, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        colortable.attach(gradientLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        colortable.attach(self.gradient, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        colortable.attach(colorLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        colortable.attach(self.color, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        colortable.attach(colorToLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        colortable.attach(self.colorTo, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        colortable.attach(self.colorSplitTo_tb, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        colortable.attach(self.colorSplitTo, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-
-        i += 1
-        colortable.attach(self.colorToSplitTo_tb, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        colortable.attach(self.colorToSplitTo, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        colortable.attach(self.interlaced, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        colortable.attach(self.interlacedColor, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        colortable.show_all()
-
-        self.border = gtk.combo_box_new_text()
-        self.border.append_text('None')
-        self.border.append_text('Flat')
-        self.border.append_text('Raised')
-        self.border.append_text('Sunken')
-        self.border.set_active(2)
-        self.border.connect('changed', self.update_border)
-        borderLabel = gtk.Label('border')
-        borderLabel.set_alignment(0, 0.5)
-
-        self.bevelButton1 = gtk.RadioButton(None, "Bevel1")
-        self.bevelButton2 = gtk.RadioButton(self.bevelButton1, "Bevel2")
-        self.bevelButton1.connect("toggled", self.update_interlaced)
-
-        self.borderColor = ColorButton()
-        self.borderColor.connect("color-set", self.update_value)
-        borderColorLabel = gtk.Label('border color')
-        borderColorLabel.set_alignment(0, 0.5)
-
-        self.highlight = gtk.Adjustment(128, 0, 65535, 1, 256, 0)
-        self.shadow = gtk.Adjustment(64, 0, 256, 1, 16, 0)
-        self.highlight.connect("value_changed", self.update_value)
-        self.shadow.connect("value_changed", self.update_value)
-
-        self.highlightButton = gtk.SpinButton(self.highlight, 0, 0)
-        self.highlightButton.set_numeric(True)
-        self.highlightButton.set_digits(0)
-        highlightLabel = gtk.Label('highlight')
-        highlightLabel.set_alignment(0, 0.5)
-
-        self.shadowButton = gtk.SpinButton(self.shadow, 0, 0)
-        self.shadowButton.set_numeric(True)
-        self.shadowButton.set_digits(0)
-        shadowLabel = gtk.Label('shadow')
-        shadowLabel.set_alignment(0, 0.5)
-
-        reset = gtk.Button(label="reset")
-        reset.set_alignment(0.5, 0.5)
-        reset.connect("clicked", self.reset)
-
-        bordertable = gtk.Table(rows=2, columns=2, homogeneous=False)
-        i = 0
-        bordertable.attach(borderLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        bordertable.attach(self.border, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        bordertable.attach(borderColorLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        bordertable.attach(self.borderColor, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        bordertable.attach(highlightLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        bordertable.attach(self.highlightButton, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        bordertable.attach(shadowLabel, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        bordertable.attach(self.shadowButton, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        bordertable.attach(self.bevelButton1, 0, 1, i, i+1, FILL, EXPAND, 5, 0)
-        bordertable.attach(self.bevelButton2, 1, 2, i, i+1, FILL, EXPAND, 0, 0)
-        i += 1
-        bordertable.attach(reset, 0, 2, i, i+1, FILL, FILL, 5, 0)
-        bordertable.show_all()
-
-        hbox = gtk.HBox(False, 5)
-        hbox.pack_start(colortable, False, False, 5)
-        hbox.pack_start(bordertable, False, False, 5)
-        hbox.show()
-        self.add(hbox)
-        self.update_texture()

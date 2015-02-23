@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+import logging
 import re
 from types import StringType
 from openbox.theme_elements import themeElements
@@ -43,7 +44,8 @@ class Theme():
                             theme = self.parse_element(match + suffix, value, theme)
                             glob_was_successful = True
                     if not glob_was_successful:
-                        print "Warning: failed to match globbing pattern: " + name
+                        logging.warning("Failed to match globbing pattern: {}"
+                                        .format(name))
                 else:
                     theme = self.parse_element(name, value, theme)
         f.close()
@@ -71,7 +73,7 @@ class Theme():
                 else:
                     theme[texture] = "%s: %s" % (texture_attr, value)
                 return theme
-        print "Warning: ignoring unrecognized theme element \"%s\"" % name
+        logging.warning("Ignoring unrecognized theme element '{}'".format(name))
         return theme
 
     def load_file(self, name):
@@ -145,8 +147,6 @@ class Theme():
         return colors
 
     def set_value(self, key, value):
-        # if key not in self.elements:
-        #     print "new key:", key
         self.elements[key] = value
         for color in self.extract_colors(key, value):
             self.palette.add_color(color, True)
@@ -181,7 +181,6 @@ class Theme():
             self.report_change("replaced %s with %s" % (old, new))
 
     def report_change(self, what=None):
-        # print what
         themerc = self.__str__()
         if themerc != self.themerc:
             self.themerc = themerc

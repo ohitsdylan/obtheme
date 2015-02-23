@@ -2,8 +2,8 @@
 
 from __future__ import absolute_import
 
+import logging
 import gtk
-import sys
 import os
 from obtheme import VERSION
 from xbm.editor import XBMEditor
@@ -24,7 +24,7 @@ class XBMWindow:
         dialog.vbox.pack_start(label, False, True, 10)
         dialog.vbox.show_all()
         response = dialog.run()
-        print(response)
+        logging.debug(response)
         dialog.destroy()
 
     def display_help(self, *args):
@@ -50,7 +50,7 @@ Images will be saved along the themerc file.
         dialog.vbox.pack_start(textview_window, True, True, 5)
         dialog.vbox.show_all()
         response = dialog.run()
-        print(response)
+        logging.debug(response)
         dialog.destroy()
 
     def __init__(self):
@@ -258,9 +258,9 @@ Images will be saved along the themerc file.
                 self.set_labels()
                 self.file_name = fpath
             else:
-                sys.stderr.write("Error: unable to open %s\n" % fpath)
+                logging.error("Error: unable to open %s\n" % fpath)
         else:
-            sys.stderr.write("Error: no default could be found for %s.xbm\n" % name)
+            logging.error("Error: no default could be found for %s.xbm\n" % name)
 
     def remove_image(self, *args):
         name = self.combobox.get_active_text()
@@ -343,7 +343,7 @@ Images will be saved along the themerc file.
                         self.combobox.set_active(i)
                         break
             else:
-                sys.stderr.write("Error: unable to open %s\n" % name)
+                logging.error("Error: unable to open %s\n" % name)
 
     def save_xbm(self, widget=None, arg=None, *args):
         name = self.file_name

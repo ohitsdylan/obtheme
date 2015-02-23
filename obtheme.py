@@ -1,5 +1,5 @@
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
 
 # Copyright (C) 2009  Xyne
 #
@@ -18,6 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from __future__ import absolute_import
+
+import logging
 
 # METADATA
 # Version: 0.7
@@ -65,10 +67,10 @@ class ObTheme:
         dialog.vbox.pack_start(label, False, True, 10)
         dialog.vbox.show_all()
         response = dialog.run()
-        print(response)
+        logging.debug(response)
         dialog.destroy()
 
-    def display_help(self, *args):
+    def display_help(self):
         help_msg = '''Most things in ObTheme are hopefully self-explanatory. Here are a few things which might not be:
 
 The Palette
@@ -107,27 +109,26 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
         dialog.vbox.pack_start(textview_window, True, True, 5)
         dialog.vbox.show_all()
         response = dialog.run()
-        print(response)
+        logging.debug(response)
         dialog.destroy()
 
     def select(self, element, *args):
         if element in themeElements:
             typ = themeElements[element]['type']
-            has_default = True if element in themeElements[element] else False
+            has_default = True if 'default' in themeElements[element] else False
             if has_default:
-                text = "Default: %s\n" % themeElements[element]['default']
+                text = "Default: {}\n".format(themeElements[element]['default'])
             else:
                 text = ''
             if 'info' in themeElements[element]:
                 text += themeElements[element]['info']
             self.info.get_buffer().set_text(text)
-
             self.selection = element
             value = self.theme.get_value(element.lower())
-
         else:
             typ = None
             self.selection = None
+
         for frame in self.frames.keys():
             if typ == frame:
                 self.frames[frame].set_sensitive(True)
@@ -188,6 +189,7 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
             dialog.destroy()
 
     def destroy(self, widget, data=None):
+        logging.debug("self.destroy")
         gtk.main_quit()
 
     def set_title(self, title=None, *args):
@@ -280,10 +282,10 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
                 self.previous_theme = prev_theme
             rc_xml = m.group(1) + theme + m.group(3)
             if write_file(self.openbox_config_path, rc_xml):
-                print "changed theme in rc.xml: %s -> %s" % (prev_theme, theme)
+                logging.info("changed theme in rc.xml: {} -> {}".format(prev_theme, theme))
                 self.reconfigure()
                 return True
-        sys.stderr.write("unable to parse theme element of %s\n" % rc_xml)
+        logging.error("unable to parse theme element of {}\n".format(rc_xml))
         return False
 
     def save_preview(self):
@@ -300,9 +302,9 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
                 subprocess.call(['openbox', '--reconfigure'])
             except OSError:
                 self.restore()
-                sys.stderr.write("Error: unable to reconfigure openbox\n")
+                logging.error("Error: unable to reconfigure openbox\n")
             except:
-                sys.stderr.write("Unexpected error: %s" % sys.exc_info()[0])
+                logging.error("Unexpected error: {}".format(sys.exc_info()[0]))
                 raise
 
     def toggle_preview_mode(self, widget):

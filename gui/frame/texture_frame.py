@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import gtk
 import re
+import logging
 from gtk import FILL, EXPAND
 from utils.general_utils import multiply_color
 from openbox.theme_elements import themeElements

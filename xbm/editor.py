@@ -2,9 +2,9 @@
 
 from __future__ import absolute_import
 
+import logging
 import gtk
 import re
-import sys
 import os
 from utils.general_utils import (read_file, write_file)
 from utils.color_utils import str_to_color
@@ -41,19 +41,19 @@ class XBMEditor(gtk.Frame):
         if m:
             width = int(m.group(1))
         else:
-            sys.stderr.write("Error: unable to detect XBM width in %s\n" % path)
+            logging.error("Error: unable to detect XBM width in %s\n" % path)
             return None, None, None
         m = self.re_height.search(data)
         if m:
             height = int(m.group(1))
         else:
-            sys.stderr.write("Error: unable to detect XBM height in %s\n" % path)
+            logging.error("Error: unable to detect XBM height in %s\n" % path)
             return None, None, None
         m = self.re_data.search(data)
         if m:
             bool_arr = self.xbm_data_to_bool_array(self.re_split.split(m.group(1)), width)
         else:
-            sys.stderr.write("Error: unable to detect XBM mask in %s\n" % path)
+            logging.error("Error: unable to detect XBM mask in %s\n" % path)
             return None, None, None
         return width, height, bool_arr
 

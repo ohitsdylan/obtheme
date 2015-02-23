@@ -184,11 +184,19 @@ class TextureFrame(gtk.Frame):
     def set_parentrelative(self, value):
         model = self.texture.get_model()
         string = 'ParentRelative'
-        if value and model[0][0] != string:
+        if value is True and model[0][0] != string:
+            # This should not occur. Please fix theme elements definition!
+            logging.warning("Could not find '{}' in Texture model ({})."
+                            " Forcing value into ListStore."
+                            .format(string, model[0][0]))
             self.texture.prepend_text(string)
         elif value is not True and model[0][0] == string:
             self.texture.set_active(1)
             self.texture.remove_text(0)
+        else:
+            # don't know what to do
+            logging.warning("set_parentrelative got unmanaged value"
+                            " '{}' properly".format(value))
 
     def update_border(self, *args):
         border = self.border.get_active_text()

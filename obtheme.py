@@ -483,7 +483,8 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
             dialog.destroy()
         if name is not None:
             self.file_name = name
-            if self.theme.save_file(name):
+            result = self.theme.save_file(name)
+            if result is True:
                 self.set_title()
                 self.unsaved = False
                 dpath = os.path.dirname(name)
@@ -506,8 +507,10 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
             return None
 
     def set_theme(self, theme):
+        logging.debug(">>> set_theme {}".format(theme))
         rc_xml = read_file(self.openbox_config_path)
-        m = re.search(r'(^.*?<theme>.*?<name>)(.*?)(<\/name>.*$)', rc_xml, re.S)
+        m = re.search(r'(^.*?<theme>.*?<name>)(.*?)(<\/name>.*$)',
+                      rc_xml, re.S)
         if m:
             prev_theme = m.group(2)
             if theme == prev_theme:

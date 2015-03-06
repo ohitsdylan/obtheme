@@ -36,6 +36,7 @@ class SimpleDir(Fuse):
 
     def getattr(self, path):
         st = MyStat()
+        path.split('/')[1:]
         st.st_atime = int(time())
         st.st_mtime = st.st_atime
         st.st_ctime = st.st_atime
@@ -48,6 +49,12 @@ class SimpleDir(Fuse):
         else:
             return -errno.ENOENT
         return st
+
+    def access(self, path, mode):
+        full_path = self._full_path(path)
+        if not os.access(full_path, mode):
+            print("BONK!")
+            raise ValueError(errno.EACCES)
 
     def readdir(self, path, offset):
         dirents = ['.', '..']

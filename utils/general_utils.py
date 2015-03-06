@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import os
+import logging
 import shutil
 import re
 from utils.color_utils import (color_to_str, str_to_color)

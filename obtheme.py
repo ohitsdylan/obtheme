@@ -423,7 +423,7 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
             dialog.destroy()
 
     def destroy(self, widget, data=None):
-        logging.debug("self.destroy")
+        self.unmount_preview_dir()
         gtk.main_quit()
 
     def set_title(self, title=None, *args):
@@ -578,10 +578,7 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
 
     def preview_dir_is_mounted(self):
         mtab = read_file('/etc/mtab')
-        if mtab.find(self.preview_themerc_dir) > -1:
-            return True
-        else:
-            return False
+        return mtab.find(self.preview_themerc_dir) > -1
 
     def main(self):
         gtk.main()
@@ -594,20 +591,20 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
         os.system('./xbm-editor &')
 
 
-def start_fuse(fuse_obj, path):
-    fuse_obj.main(['', path])
-
-
 if __name__ == "__main__":
+    DEBUG = os.environ.get('OB_DEBUG', False)
     obt = ObTheme()
     fusedir = obt.preview_themerc_dir
+    src = obt.src_dir
     if not obt.preview_dir_is_mounted():
         if os.fork() == 0:
-            fs = SimpleDir()
             if not os.path.exists(fusedir):
                 os.makedirs(fusedir)
             clear_dir(fusedir)
-            fs.main([sys.argv[0], fusedir])
+            if not os.path.exists(src):
+                os.makedirs(src)
+            clear_dir(src)
+            fuse_obj.main(fusedir, src)
         else:
             obt.main()
     else:

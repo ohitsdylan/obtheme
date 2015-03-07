@@ -39,7 +39,7 @@ import shutil
 import subprocess
 
 from utils.general_utils import (read_file, write_file, clear_dir)
-from openbox.theme_elements import themeElements
+from openbox.theme_elements import themeElements, get_config_file
 from gui.frame.integer_frame import IntegerFrame
 from gui.frame.color_frame import ColorFrame
 from gui.frame.justification_frame import JustificationFrame
@@ -58,7 +58,6 @@ gtk.gdk.threads_init()
 WIN_WIDTH = 1100
 WIN_HEIGHT = 700
 
-
 class ObTheme:
 
     def __init__(self):
@@ -70,12 +69,16 @@ class ObTheme:
         self.window.set_position(gtk.WIN_POS_CENTER)
 
         self.src_dir = '/tmp/obtheme_preview'
-        self.preview_themerc_dir = os.getenv('HOME') + '/.themes/obtheme/openbox-3'
+        self.preview_themerc_dir = "{}{}".format(os.getenv('HOME'),
+                                                 '/.themes/obtheme/openbox-3')
         config_home = os.getenv('XDG_CONFIG_HOME')
         if not config_home:
-            config_home = os.getenv('HOME') + '/.config'
-            logging.error("Error: the environment variable \"XDG_CONFIG_HOME\" is not set\nDefaulting to {}.\n".format(config_home))
-        self.openbox_config_path = config_home + '/openbox/lubuntu-rc.xml'
+            config_home = "{}{}".format(os.getenv('HOME'), '/.config')
+            logging.warning("The environment variable 'XDG_CONFIG_HOME' is not set\n"
+                            "Defaulting to {}.\n".format(config_home))
+        self.openbox_config_path = get_config_file(config_home)
+        if not self.openbox_config_path:
+            raise OSError("Missing Openbox file. Bail out.")
 
         self.theme = Theme()
         self.theme.callback = self.refresh
@@ -302,9 +305,6 @@ class ObTheme:
 
     def quit_app(self, *args):
         self.window.destroy()
-        # TODO serve?
-        # while gtk.events_pending():
-        #     gtk.main_iteration(False)
         self.unmount_preview_dir()
         gtk.main_quit()
 
@@ -458,8 +458,10 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
 
     def open_theme(self, widget, arg=None, *args):
         name = self.file_name
-        dialog = gtk.FileChooserDialog('Select an Openbox theme file', None, gtk.FILE_CHOOSER_ACTION_OPEN,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dialog = gtk.FileChooserDialog('Select an Openbox theme file', None,
+                                       gtk.FILE_CHOOSER_ACTION_OPEN,
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         if name is not None:
             dialog.set_current_folder(os.path.dirname(name))
         dialog.set_default_response(gtk.RESPONSE_OK)
@@ -485,12 +487,11 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     def save_theme(self, widget=None, arg=None, *args):
         name = self.file_name
         if name is None or arg == 'save as':
-            if arg == 'save as':
-                button = gtk.STOCK_SAVE_AS
-            else:
-                button = gtk.STOCK_SAVE
-            dialog = gtk.FileChooserDialog('Select an Openbox theme file', None, gtk.FILE_CHOOSER_ACTION_SAVE,
-                                           (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, button, gtk.RESPONSE_OK))
+            button = gtk.STOCK_SAVE_AS if arg == 'save as' else gtk.STOCK_SAVE
+            dialog = gtk.FileChooserDialog('Select an Openbox theme file', None,
+                                   gtk.FILE_CHOOSER_ACTION_SAVE,
+                                   (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                    button, gtk.RESPONSE_OK))
             if name is not None:
                 dialog.set_current_folder(os.path.dirname(name))
                 dialog.set_current_name(os.path.basename(name))
@@ -514,8 +515,7 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
                             shutil.copyfile(self.preview_themerc_dir+'/'+item, dpath+'/'+item)
             else:
                 dialog_msg("Error",
-                           "Could not save file!\n\n"
-                           "{}".format(result),
+                           "Could not save file!\n\n{}".format(result),
                            gtk.MESSAGE_WARNING)
 
     def get_theme(self, theme):

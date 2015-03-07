@@ -2,11 +2,10 @@
 
 from __future__ import absolute_import
 
+import os
+import gtk
 import logging
 logging.basicConfig(level=logging.DEBUG)
-
-# import pygtk
-import gtk
 
 
 def dialog_yes_no(label, title):
@@ -17,8 +16,7 @@ def dialog_yes_no(label, title):
         user response
     '''
     label = gtk.Label(label)
-    dialog = gtk.Dialog(title,
-                        None,
+    dialog = gtk.Dialog(title, None,
                         gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                         (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                          gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))

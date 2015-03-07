@@ -2,6 +2,24 @@
 
 from __future__ import absolute_import
 
+import os
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Warning: on my Lubuntu Openbox configuration this file it's called
+# 'lubuntu-rc.xml'. This might happen on other configurations too, I guess.
+OPENBOX_CONFIG_FILE = '/openbox/lubuntu-rc.xml'
+
+
+def get_config_file(config_dir):
+    fullpath = "{}{}".format(config_dir, OPENBOX_CONFIG_FILE)
+    if not os.path.exists(fullpath):
+        msg = u"Could not locate Openbox config file in '{}'"\
+            .format(fullpath)
+        logging.error(msg)
+        return None
+    return fullpath
+
 themeElements = {
     'border.color': {
         'type': 'color',

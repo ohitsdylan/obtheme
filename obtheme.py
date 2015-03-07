@@ -20,6 +20,7 @@
 from __future__ import absolute_import
 
 import logging
+logging.basicConfig(level=logging.DEBUG)
 
 # METADATA
 # Version: 0.7
@@ -36,7 +37,6 @@ import os.path
 import re
 import shutil
 import subprocess
-import sys
 
 from utils.general_utils import (read_file, write_file, clear_dir)
 from openbox.theme_elements import themeElements
@@ -509,7 +509,6 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
             return None
 
     def set_theme(self, theme):
-        logging.debug(">>> set_theme {}".format(theme))
         rc_xml = read_file(self.openbox_config_path)
         m = re.search(r'(^.*?<theme>.*?<name>)(.*?)(<\/name>.*$)',
                       rc_xml, re.S)
@@ -521,15 +520,19 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
                 self.previous_theme = prev_theme
             rc_xml = m.group(1) + theme + m.group(3)
             if write_file(self.openbox_config_path, rc_xml):
-                logging.info("changed theme in rc.xml: {} -> {}".format(prev_theme, theme))
+                logging.debug("Changed theme in rc.xml: {} -> {}"
+                             .format(prev_theme, theme))
                 self.reconfigure()
                 return True
-        logging.error("unable to parse theme element of {}\n".format(rc_xml))
+        logging.error("Unable to parse theme element of {}\n".format(rc_xml))
         return False
 
     def save_preview(self):
         if os.path.exists(self.preview_themerc_dir):
             write_file(self.preview_themerc_dir+'/themerc', self.get_themerc())
+        else:
+            logging.warning("Could not find path {}"
+                            .format(self.preview_themerc_dir))
 
     def save_and_reconfigure(self):
         self.save_preview()
@@ -539,11 +542,12 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
         if self.preview_mode:
             try:
                 subprocess.call(['openbox', '--reconfigure'])
-            except OSError:
+            except OSError as e:
                 self.restore()
-                logging.error("Error: unable to reconfigure openbox\n")
-            except:
-                logging.error("Unexpected error: {}".format(sys.exc_info()[0]))
+                logging.error("Unable to reconfigure openbox: {}"
+                              .format(e))
+            except Exception as e1:
+                logging.error("Unexpected error: {}".format(e1))
                 raise
 
     def toggle_preview_mode(self, widget):

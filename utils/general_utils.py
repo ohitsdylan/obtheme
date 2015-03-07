@@ -45,13 +45,22 @@ def read_file(path):
 
 
 def write_file(path, contents):
+    '''Write contents to file
+    Args:
+        path
+        contents
+    '''
     try:
         f = open(path, 'w')
-    except IOError:
-        return False
+    except IOError as e:
+        logging.error(u'Could not write theme content in {}: {}'
+                      .format(path, e))
+        return e
     else:
         f.write(contents)
         f.close()
+        logging.debug(u'Wrote theme content in {}'
+                      .format(path))
         return True
 
 

@@ -9,6 +9,8 @@ from openbox.theme_elements import themeElements
 from gui.palette import Palette
 from utils.general_utils import (write_file, format_ob_color_str)
 
+logging.basicConfig(level=logging.DEBUG)
+
 
 class Theme():
 

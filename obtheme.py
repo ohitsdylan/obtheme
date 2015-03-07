@@ -48,24 +48,28 @@ from gui.frame.text_shadow import TextShadowStringFrame
 from gui.theme.theme import Theme
 from gui.theme.theme_element_selector import ThemeElementSelector
 from gui.theme.theme_file_selector import ThemeFileSelector
-from utils.fuse_utils import SimpleDir
+from gui.dialog import dialog_msg
+import utils.fuse_utils_new as fuse_obj
 
 gobject.threads_init()
 gtk.gdk.threads_init()
+
+# main window size
+WIN_WIDTH = 1100
+WIN_HEIGHT = 700
+
 
 class ObTheme:
 
     def __init__(self):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("ObTheme")
-        self.window.set_default_size(1100, 700)
+        self.window.set_default_size(WIN_WIDTH, WIN_HEIGHT)
         self.window.connect("destroy", self.destroy)
         self.window.connect("delete_event", self.delete_event)
         self.window.set_position(gtk.WIN_POS_CENTER)
 
-        accel_group = gtk.AccelGroup()
-        self.window.add_accel_group(accel_group)
-
+        self.src_dir = '/tmp/obtheme_preview'
         self.preview_themerc_dir = os.getenv('HOME') + '/.themes/obtheme/openbox-3'
         config_home = os.getenv('XDG_CONFIG_HOME')
         if not config_home:
@@ -82,6 +86,99 @@ class ObTheme:
         self.unsaved = False
         self.preview_mode = False
         self.themerc = None
+
+        menu_list = self.setupMenu()
+        menu_bar = gtk.MenuBar()
+        menu_bar.append(menu_list['file'])
+        menu_bar.append(menu_list['theme'])
+        menu_bar.append(menu_list['tools'])
+        menu_bar.append(menu_list['help'])
+
+        self.frames = {}
+        integer = IntegerFrame()
+        self.frames['integer'] = integer
+        integer.callback = self.update
+
+        color = ColorFrame()
+        self.frames['color'] = color
+        color.callback = self.update
+
+        text_shadow_string = TextShadowStringFrame()
+        self.frames['text shadow string'] = text_shadow_string
+        text_shadow_string.callback = self.update
+
+        justification = JustificationFrame()
+        self.frames['justification'] = justification
+        justification.callback = self.update
+
+        texture = TextureFrame()
+        self.frames['texture'] = texture
+        texture.callback = self.update
+
+        infopanel = gtk.ScrolledWindow()
+        infopanel.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        infolabel = gtk.Label(' information:')
+        infolabel.set_alignment(0, 1)
+        self.info = gtk.TextView()
+        self.info.set_wrap_mode(gtk.WRAP_WORD)
+        self.info.set_left_margin(5)
+        self.info.set_right_margin(5)
+        self.info.set_size_request(400, 50)
+        self.info.set_editable(False)
+        infopanel.add(self.info)
+
+        theme_element_selector = ThemeElementSelector()
+        theme_element_selector.callback = self.select
+        themelist = ThemeFileSelector()
+        themelist.callback = self.open_from_list
+
+        hpane = gtk.HPaned()
+        hpane.add1(theme_element_selector)
+        hpane.add2(themelist)
+        hpane.show_all()
+
+        vpane = gtk.VPaned()
+        vpane.add1(infopanel)
+        vpane.add2(hpane)
+        vpane.show_all()
+
+        table = gtk.Table(rows=7, columns=4, homogeneous=False)
+        i = 0
+        j = 0
+        table.attach(integer, i, i+2, j, j+1)
+        i += 2
+        table.attach(texture, i, i+1, j, j+3)
+        i = 0
+        j += 1
+        table.attach(color, i, i+1, j, j+1)
+        i += 1
+        table.attach(justification, i, i+1, j, j+1)
+        i = 0
+        j += 1
+        table.attach(text_shadow_string, i, i+2, j, j+1)
+        table.show_all()
+
+        hbox = gtk.HBox()
+        hbox.pack_start(table, False, False, 2)
+        hbox.pack_start(self.theme.palette, True, True, 2)
+        hbox.show_all()
+
+        vbox = gtk.VBox()
+        vbox.pack_start(menu_bar, False, False, 2)
+        vbox.pack_start(hbox, False, False, 2)
+        vbox.pack_start(infolabel, False, False, 2)
+        vbox.pack_start(vpane, True, True, 2)
+        vbox.show_all()
+
+        self.select(None)
+        self.window.add(vbox)
+        self.window.show_all()
+        self.window.show()
+
+    def setupMenu(self):
+
+        accel_group = gtk.AccelGroup()
+        self.window.add_accel_group(accel_group)
 
         file_menu_open = gtk.ImageMenuItem(gtk.STOCK_OPEN)
         file_menu_open.connect("activate", self.open_theme, 'open')
@@ -196,98 +293,19 @@ class ObTheme:
         tools_menu.set_submenu(tools_submenu)
         tools_menu.show()
 
-        menu_bar = gtk.MenuBar()
-        menu_bar.append(file_menu)
-        menu_bar.append(theme_menu)
-        menu_bar.append(tools_menu)
-        menu_bar.append(help_menu)
-
-        self.frames = {}
-        integer = IntegerFrame()
-        self.frames['integer'] = integer
-        integer.callback = self.update
-
-        color = ColorFrame()
-        self.frames['color'] = color
-        color.callback = self.update
-
-        text_shadow_string = TextShadowStringFrame()
-        self.frames['text shadow string'] = text_shadow_string
-        text_shadow_string.callback = self.update
-
-        justification = JustificationFrame()
-        self.frames['justification'] = justification
-        justification.callback = self.update
-
-        texture = TextureFrame()
-        self.frames['texture'] = texture
-        texture.callback = self.update
-
-        infopanel = gtk.ScrolledWindow()
-        infopanel.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        infolabel = gtk.Label(' information:')
-        infolabel.set_alignment(0, 1)
-        self.info = gtk.TextView()
-        self.info.set_wrap_mode(gtk.WRAP_WORD)
-        self.info.set_left_margin(5)
-        self.info.set_right_margin(5)
-        self.info.set_size_request(400, 50)
-        self.info.set_editable(False)
-        infopanel.add(self.info)
-
-        theme_element_selector = ThemeElementSelector()
-        theme_element_selector.callback = self.select
-        themelist = ThemeFileSelector()
-        themelist.callback = self.open_from_list
-
-        hpane = gtk.HPaned()
-        hpane.add1(theme_element_selector)
-        hpane.add2(themelist)
-        hpane.show_all()
-
-        vpane = gtk.VPaned()
-        vpane.add1(infopanel)
-        vpane.add2(hpane)
-        vpane.show_all()
-
-        table = gtk.Table(rows=7, columns=4, homogeneous=False)
-        i = 0
-        j = 0
-        table.attach(integer, i, i+2, j, j+1)
-        i += 2
-        table.attach(texture, i, i+1, j, j+3)
-        i = 0
-        j += 1
-        table.attach(color, i, i+1, j, j+1)
-        i += 1
-        table.attach(justification, i, i+1, j, j+1)
-        i = 0
-        j += 1
-        table.attach(text_shadow_string, i, i+2, j, j+1)
-        table.show_all()
-
-        hbox = gtk.HBox()
-        hbox.pack_start(table, False, False, 2)
-        hbox.pack_start(self.theme.palette, True, True, 2)
-        hbox.show_all()
-
-        vbox = gtk.VBox()
-        vbox.pack_start(menu_bar, False, False, 2)
-        vbox.pack_start(hbox, False, False, 2)
-        vbox.pack_start(infolabel, False, False, 2)
-        vbox.pack_start(vpane, True, True, 2)
-        vbox.show_all()
-
-        self.select(None)
-        self.window.add(vbox)
-        self.window.show_all()
-        self.window.show()
+        return {
+            'file': file_menu,
+            'theme': theme_menu,
+            'tools': tools_menu,
+            'help': help_menu
+        }
 
     def quit_app(self, *args):
         self.window.destroy()
         # TODO serve?
         # while gtk.events_pending():
         #     gtk.main_iteration(False)
+        self.unmount_preview_dir()
         gtk.main_quit()
 
     def display_about(self):

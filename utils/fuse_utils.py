@@ -11,6 +11,7 @@ from fuse import Fuse, Stat
 
 
 class MyStat(Stat):
+
     def __init__(self):
         self.st_mode = stat.S_IFDIR | 0755
         self.st_ino = 0

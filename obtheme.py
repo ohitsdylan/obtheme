@@ -495,8 +495,10 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
                         if item[-4:] == '.xbm':
                             shutil.copyfile(self.preview_themerc_dir+'/'+item, dpath+'/'+item)
             else:
-                # self.file_name = None
-                self.save_theme(None, 'save as')
+                dialog_msg("Error",
+                           "Could not save file!\n\n"
+                           "{}".format(result),
+                           gtk.MESSAGE_WARNING)
 
     def get_theme(self, theme):
         rc_xml = read_file(self.openbox_config_path)

@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2009  Xyne
@@ -49,14 +49,17 @@ from gui.theme.theme import Theme
 from gui.theme.theme_element_selector import ThemeElementSelector
 from gui.theme.theme_file_selector import ThemeFileSelector
 from gui.dialog import dialog_msg
-import utils.fuse_utils_new as fuse_obj
+from utils import fuse_utils as fuse_obj
+from xbm.window import XBMWindow
 
 gobject.threads_init()
 gtk.gdk.threads_init()
 
 # main window size
+# customize to your taste
 WIN_WIDTH = 1100
 WIN_HEIGHT = 700
+
 
 class ObTheme:
 
@@ -601,12 +604,10 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     def main(self):
         gtk.main()
 
-    # def open_xbm_editor(self,*args):
-    #  editor = XBMWindow()
-    #  editor.callback = self.reconfigure
-
     def open_xbm_editor(self, *args):
-        os.system('./xbm-editor &')
+        # os.system('./xbm-editor &')
+        editor = XBMWindow()
+        editor.callback = self.reconfigure
 
 
 if __name__ == "__main__":

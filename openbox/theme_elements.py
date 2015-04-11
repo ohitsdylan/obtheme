@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Warning: on my Lubuntu Openbox configuration this file it's called
-# 'lubuntu-rc.xml'. This might happen on other configurations too, I guess.
+# 'lubuntu-rc.xml' rather than 'rc.xml'. YMMV.
 OPENBOX_CONFIG_FILE = '/openbox/lubuntu-rc.xml'
 
 

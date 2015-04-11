@@ -287,7 +287,6 @@ class ObTheme:
 
         xbm_menu = gtk.ImageMenuItem('_XBM Editor')
         xbm_menu.connect("activate", self.open_xbm_editor)
-        # xbm_menu.connect("activate", os.system('python xbm-editor'))
         xbm_menu.add_accelerator("activate", accel_group, ord('x'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
         # xbm_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
 
@@ -311,7 +310,7 @@ class ObTheme:
         self.unmount_preview_dir()
         gtk.main_quit()
 
-    def display_about(self):
+    def display_about(self, *args):
         about_msg = "ObTheme {}\n\n GTK+ Openbox theme editor \n\nCopyright \302\251 2009 Xyne ".format(VERSION)
 
         label = gtk.Label(about_msg)
@@ -325,7 +324,7 @@ class ObTheme:
         logging.debug(response)
         dialog.destroy()
 
-    def display_help(self):
+    def display_help(self, *args):
         help_msg = '''Most things in ObTheme are hopefully self-explanatory. Here are a few things which might not be:
 
 The Palette
@@ -492,9 +491,9 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
         if name is None or arg == 'save as':
             button = gtk.STOCK_SAVE_AS if arg == 'save as' else gtk.STOCK_SAVE
             dialog = gtk.FileChooserDialog('Select an Openbox theme file', None,
-                                   gtk.FILE_CHOOSER_ACTION_SAVE,
-                                   (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                    button, gtk.RESPONSE_OK))
+                                           gtk.FILE_CHOOSER_ACTION_SAVE,
+                                           (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                            button, gtk.RESPONSE_OK))
             if name is not None:
                 dialog.set_current_folder(os.path.dirname(name))
                 dialog.set_current_name(os.path.basename(name))

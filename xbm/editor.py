@@ -9,8 +9,6 @@ import os
 from utils.general_utils import (read_file, write_file)
 from utils.color_utils import str_to_color
 
-# FIXME not used
-
 
 class XBMEditor(gtk.Frame):
 

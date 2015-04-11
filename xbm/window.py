@@ -5,11 +5,11 @@ from __future__ import absolute_import
 import logging
 import gtk
 import os
-from obtheme import VERSION
-from xbm.editor import XBMEditor
+from gui.dialog import dialog_msg
 from openbox.theme_elements import imageButtons
+from xbm.editor import XBMEditor
 
-# FIXME class not used
+VERSION = '0.7'
 
 
 class XBMWindow:
@@ -24,84 +24,10 @@ class XBMWindow:
         self.theme_dir = os.getenv('HOME')+'/.themes/obtheme/openbox-3'
         self.callback = None
 
-        accel_group = gtk.AccelGroup()
-        self.window.add_accel_group(accel_group)
-
-        file_menu_open = gtk.ImageMenuItem('_Open...')
-        file_menu_open.connect("activate", self.open_xbm, 'open')
-        file_menu_open.add_accelerator("activate",
-                                       accel_group, ord('o'),
-                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        file_menu_open.set_image(gtk.image_new_from_stock(
-            gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU))
-
-        file_menu_save = gtk.ImageMenuItem('_Save')
-        file_menu_save.connect("activate", self.save_xbm, 'save')
-        file_menu_save.add_accelerator("activate",
-                                       accel_group, ord('s'),
-                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        file_menu_save.set_image(gtk.image_new_from_stock(
-            gtk.STOCK_SAVE, gtk.ICON_SIZE_MENU))
-
-        file_menu_save_as = gtk.ImageMenuItem('Save _As...')
-        file_menu_save_as.connect("activate", self.save_xbm, 'save as')
-        file_menu_save_as.add_accelerator("activate",
-                                          accel_group, ord('s'),
-                                          (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK),
-                                          gtk.ACCEL_VISIBLE)
-        file_menu_save_as.set_image(gtk.image_new_from_stock(
-            gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
-
-        file_menu_separator = gtk.SeparatorMenuItem()
-
-        file_menu_quit = gtk.ImageMenuItem("_Quit")
-        # file_menu_quit.connect("activate", gtk.main_quit)
-        file_menu_quit.add_accelerator("activate",
-                                       accel_group, ord('q'),
-                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        file_menu_quit.set_image(gtk.image_new_from_stock(
-            gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
-
-        file_submenu = gtk.Menu()
-        file_submenu.append(file_menu_open)
-        file_submenu.append(file_menu_save)
-        file_submenu.append(file_menu_save_as)
-        file_submenu.append(file_menu_separator)
-        file_submenu.append(file_menu_quit)
-        file_submenu.show_all()
-
-        file_menu = gtk.ImageMenuItem("_File")
-        file_menu.set_submenu(file_submenu)
-        file_menu.show()
-
-        info_menu = gtk.ImageMenuItem('_Info')
-        info_menu.connect("activate", self.display_help)
-        info_menu.add_accelerator("activate",
-                                  accel_group, ord('h'),
-                                  gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
-        info_menu.set_image(gtk.image_new_from_stock(
-            gtk.STOCK_INFO, gtk.ICON_SIZE_MENU))
-
-        about_menu = gtk.ImageMenuItem('_About')
-        about_menu.connect("activate", self.display_about)
-        # about_menu.add_accelerator("activate",
-        #                            accel_group, ord('h'),
-        #                            gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-        about_menu.set_image(gtk.image_new_from_stock(
-            gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
-
-        help_submenu = gtk.Menu()
-        help_submenu.append(info_menu)
-        help_submenu.append(about_menu)
-        help_submenu.show_all()
-
-        help_menu = gtk.ImageMenuItem("_Help")
-        help_menu.set_submenu(help_submenu)
-        help_menu.show()
-
+        menu_list = self.setupMenu()
         menu_bar = gtk.MenuBar()
-        menu_bar.append(file_menu)
-        menu_bar.append(help_menu)
+        menu_bar.append(menu_list['file'])
+        menu_bar.append(menu_list['help'])
 
         open_button = gtk.ToolButton(stock_id=gtk.STOCK_OPEN)
         save_button = gtk.ToolButton(stock_id=gtk.STOCK_SAVE)
@@ -184,12 +110,96 @@ class XBMWindow:
         self.editor = editor
         self.set_labels()
 
+    def setupMenu(self):
+        accel_group = gtk.AccelGroup()
+        self.window.add_accel_group(accel_group)
+
+        file_menu_open = gtk.ImageMenuItem('_Open...')
+        file_menu_open.connect("activate", self.open_xbm, 'open')
+        file_menu_open.add_accelerator("activate",
+                                       accel_group, ord('o'),
+                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        file_menu_open.set_image(gtk.image_new_from_stock(
+            gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU))
+
+        file_menu_save = gtk.ImageMenuItem('_Save')
+        file_menu_save.connect("activate", self.save_xbm, 'save')
+        file_menu_save.add_accelerator("activate",
+                                       accel_group, ord('s'),
+                                       gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        file_menu_save.set_image(gtk.image_new_from_stock(
+            gtk.STOCK_SAVE, gtk.ICON_SIZE_MENU))
+
+        file_menu_save_as = gtk.ImageMenuItem('Save _As...')
+        file_menu_save_as.connect("activate", self.save_xbm, 'save as')
+        file_menu_save_as.add_accelerator("activate",
+                                          accel_group, ord('s'),
+                                          (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK),
+                                          gtk.ACCEL_VISIBLE)
+        file_menu_save_as.set_image(gtk.image_new_from_stock(
+            gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+
+        file_menu_separator = gtk.SeparatorMenuItem()
+
+        file_menu_quit = gtk.ImageMenuItem(gtk.STOCK_QUIT)
+        file_menu_quit.connect("activate", self.quit_app)
+        # file_menu_quit = gtk.ImageMenuItem("_Quit")
+        # file_menu_quit.connect("activate", gtk.main_quit)
+        # file_menu_quit.add_accelerator("activate",
+        #                                accel_group, ord('q'),
+        #                                gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        # file_menu_quit.set_image(gtk.image_new_from_stock(
+        #     gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
+
+        file_submenu = gtk.Menu()
+        file_submenu.append(file_menu_open)
+        file_submenu.append(file_menu_save)
+        file_submenu.append(file_menu_save_as)
+        file_submenu.append(file_menu_separator)
+        file_submenu.append(file_menu_quit)
+        file_submenu.show_all()
+
+        file_menu = gtk.ImageMenuItem("_File")
+        file_menu.set_submenu(file_submenu)
+        file_menu.show()
+
+        info_menu = gtk.ImageMenuItem('_Info')
+        info_menu.connect("activate", self.display_help)
+        info_menu.add_accelerator("activate",
+                                  accel_group, ord('h'),
+                                  gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
+        info_menu.set_image(gtk.image_new_from_stock(
+            gtk.STOCK_INFO, gtk.ICON_SIZE_MENU))
+
+        about_menu = gtk.ImageMenuItem('_About')
+        about_menu.connect("activate", self.display_about)
+        # about_menu.add_accelerator("activate",
+        #                            accel_group, ord('h'),
+        #                            gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
+        about_menu.set_image(gtk.image_new_from_stock(
+            gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+
+        help_submenu = gtk.Menu()
+        help_submenu.append(info_menu)
+        help_submenu.append(about_menu)
+        help_submenu.show_all()
+
+        help_menu = gtk.ImageMenuItem("_Help")
+        help_menu.set_submenu(help_submenu)
+        help_menu.show()
+
+        return {
+            'file': file_menu,
+            'help': help_menu
+        }
+
+    def quit_app(self, *args):
+        self.window.destroy()
+
     def display_about(self, *args):
         about_msg = "XBM Editor %s\n\n GTK+ X BitMap editor \n\nCopyright \302\251 2009 Xyne " % VERSION
-
         label = gtk.Label(about_msg)
         label.set_justify(gtk.JUSTIFY_CENTER)
-
         dialog = gtk.Dialog(None, None, gtk.DIALOG_DESTROY_WITH_PARENT, ('_Close', 1))
         dialog.set_title("About XBM Editor")
         dialog.vbox.pack_start(label, False, True, 10)
@@ -319,8 +329,10 @@ Images will be saved along the themerc file.
         filter_xpm.set_name("XBM")
         filter_xpm.add_pattern("*.xbm")
         name = self.file_name
-        dialog = gtk.FileChooserDialog('Select an XBM file', None, gtk.FILE_CHOOSER_ACTION_OPEN,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dialog = gtk.FileChooserDialog('Select an XBM file', None,
+                                       gtk.FILE_CHOOSER_ACTION_OPEN,
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dialog.add_filter(filter_xpm)
         dialog.add_filter(filter_all)
         dialog.set_default_response(gtk.RESPONSE_OK)
@@ -349,12 +361,11 @@ Images will be saved along the themerc file.
     def save_xbm(self, widget=None, arg=None, *args):
         name = self.file_name
         if name is None or arg == 'save as':
-            if arg == 'save as':
-                button = gtk.STOCK_SAVE
-            else:
-                button = gtk.STOCK_SAVE
-            dialog = gtk.FileChooserDialog('Select an XBM file', None, gtk.FILE_CHOOSER_ACTION_SAVE,
-                                           (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, button, gtk.RESPONSE_OK))
+            button = gtk.STOCK_SAVE_AS if arg == 'save as' else gtk.STOCK_SAVE
+            dialog = gtk.FileChooserDialog('Select an XBM file', None,
+                                           gtk.FILE_CHOOSER_ACTION_SAVE,
+                                           (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                            button, gtk.RESPONSE_OK))
             filter_all = gtk.FileFilter()
             filter_all.set_name("All files")
             filter_all.add_pattern("*")
@@ -374,11 +385,15 @@ Images will be saved along the themerc file.
             dialog.destroy()
         if name is not None:
             self.file_name = name
-            if self.editor.save_xbm(name):
+            result = self.editor.save_xbm(name)
+            if result is True:
                 self.unsaved = False
                 self.file_name = name
             else:
-                self.save_xbm(None, 'save as')
+                #self.save_xbm(None, 'save as')
+                dialog_msg("Error",
+                           "Could not save file!\n\n{}".format(result),
+                           gtk.MESSAGE_WARNING)
 
     def main(self):
         gtk.main()

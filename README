@@ -4,3 +4,8 @@ ObTheme follows the Openbox theme specification at http://openbox.org/wiki/Help:
 
 This is a refactor of the original code by https://github.com/SRoader/obtheme, intended to modularize the codebase and ease the porting to Python3.
 Pending task is porting from PyGTK to PyGObject (https://wiki.gnome.org/action/show/Projects/PyGObject).
+
+Configuration
+=============
+
+In openbox/theme_elements.py configure OPENBOX_CONFIG_FILE to point to your OpenBox theme file.

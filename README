@@ -1,3 +1,5 @@
 ObTheme is a GUI theme editor for openbox. Among its features are a live preview mode, a built-in xbm image button editor and a palette for changing colors globally. ObTheme has no connection to an older application of the same name.
 
 ObTheme follows the Openbox theme specification at http://openbox.org/wiki/Help:Themes.
+
+#### This is a fork of [obtheme](https://github.com/obtheme/obtheme), credits to @ikem-krueger

@@ -17,17 +17,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # METADATA
-# Version: 0.7
-VERSION = '0.7'
-
-import pygtk
-pygtk.require('2.0')
-import gtk
-from gtk import FILL,EXPAND,SHRINK
-import gobject
+# Version: 0.8
+VERSION = '0.8'
+2
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+# from gtk import FILL,EXPAND,SHRINK
+from gi.repository import GObject
 
 import colorsys
-import commands
+# import commands
 import errno
 import fuse
 from fuse import Fuse,Stat
@@ -42,8 +42,8 @@ import sys
 from time import time
 from types import StringType
 
-gobject.threads_init()
-gtk.gdk.threads_init()
+GObject.threads_init()
+Gdk.threads_init()
 
 ############################################
 ########## Openbox Theme Elements ##########
@@ -668,7 +668,7 @@ imageButtons = {
 }
 
 #######################################
-########## General Functions  ##########
+########## General Functions  #########
 #######################################
 
 
@@ -679,7 +679,7 @@ def color_to_str(color):
   return "#%02X%02X%02X" % (red,green,blue)
 
 def str_to_color(string):
-  return gtk.gdk.color_parse(string)
+  return Gdk.color_parse(string)
 
 def format_ob_color_str(string):
   if string.startswith('rgb:'):
@@ -753,16 +753,16 @@ def clear_dir(dpath):
 ########## Modifed ColorButton ##########
 #########################################
 
-class ColorButton(gtk.ColorButton):
+class ColorButton(Gtk.ColorButton):
 
   def __init__(self,*args):
-    gtk.ColorButton.__init__(self,*args)
+    GObject.GObject.__init__(self,*args)
     self.drag_dest_set(0,[],0)
     self.connect("drag_motion", self.drag_motion)
     self.connect("drag_drop", self.drag_drop)
 
   def drag_motion(self, widget, context, x, y, time):
-    context.drag_status(gtk.gdk.ACTION_COPY, time)
+    context.drag_status(Gdk.DragAction.COPY, time)
     return True
 
   def drag_drop(self, widget, context, x, y, time):
@@ -791,7 +791,7 @@ class ColorButton(gtk.ColorButton):
 ########## Integer Frame ##########
 ###################################
 
-class IntegerFrame(gtk.Frame):
+class IntegerFrame(Gtk.Frame):
   def update_value(self,*arg):
     if self.callback and self.sensitive:
       self.callback(int(self.value.get_value()))
@@ -835,35 +835,35 @@ class IntegerFrame(gtk.Frame):
     self.value.upper = int(ubound)
 
   def __init__(self,**args):
-    gtk.Frame.__init__(self,**args)
-    self.set_shadow_type(gtk.SHADOW_NONE)
+    GObject.GObject.__init__(self,**args)
+    self.set_shadow_type(Gtk.ShadowType.NONE)
     self.set_label_align(1,0.5)
     self.set_label("integer")
     self.default = 1
     self.callback = None
 
-    self.value = gtk.Adjustment(1,0,100,1,1,0)
+    self.value = Gtk.Adjustment(1,0,100,1,1,0)
     self.value.connect("value_changed", self.update_value)
 
-    hbox = gtk.HBox(True,5)
+    hbox = Gtk.HBox(True,5)
     self.add(hbox)
     boxargs = {'expand' : False, 'fill' : True, 'padding' : 5}
 
 
-    label = gtk.Label("value:")
+    label = Gtk.Label(label="value:")
     label.set_alignment(0.5,0.5)
     hbox.pack_start(label, **boxargs)
     label.show()
 
 
-    spinbutton = gtk.SpinButton(self.value,0,0)
+    spinbutton = Gtk.SpinButton(self.value,0,0)
     spinbutton.set_numeric(True)
     spinbutton.set_digits(0)
     spinbutton.set_alignment(0.5)
     hbox.pack_start(spinbutton, **boxargs)
     spinbutton.show()
 
-    reset = gtk.Button(label="reset")
+    reset = Gtk.Button(label="reset")
     reset.set_alignment(0.5,0.5)
     reset.connect("clicked",self.reset)
     hbox.pack_start(reset,**boxargs)
@@ -880,7 +880,7 @@ class IntegerFrame(gtk.Frame):
 ########## Justification Frame ##########
 #########################################
 
-class JustificationFrame(gtk.Frame):
+class JustificationFrame(Gtk.Frame):
   def update_value(self,*args):
     value = self.combobox.get_active_text()
     if self.callback and self.sensitive:
@@ -897,13 +897,13 @@ class JustificationFrame(gtk.Frame):
     self.sensitive = True
 
   def __init__(self,**args):
-    gtk.Frame.__init__(self,**args)
-    self.set_shadow_type(gtk.SHADOW_NONE)
+    GObject.GObject.__init__(self,**args)
+    self.set_shadow_type(Gtk.ShadowType.NONE)
     self.set_label_align(1,0.5)
     self.set_label("justification")
     self.callback = None
 
-    self.combobox = gtk.combo_box_new_text()
+    self.combobox = Gtk.ComboBoxText()
     self.add(self.combobox)
     self.combobox.append_text('Left')
     self.combobox.append_text('Center')
@@ -918,7 +918,7 @@ class JustificationFrame(gtk.Frame):
 ########## Texture Frame ##########
 ###################################
 
-class TextureFrame(gtk.Frame):
+class TextureFrame(Gtk.Frame):
 
   def update_value(self,*args):
     attributes = {}
@@ -1152,25 +1152,25 @@ class TextureFrame(gtk.Frame):
 
 
   def __init__(self,**args):
-    gtk.Frame.__init__(self,**args)
-    self.set_shadow_type(gtk.SHADOW_NONE)
+    GObject.GObject.__init__(self,**args)
+    self.set_shadow_type(Gtk.ShadowType.NONE)
     self.set_label_align(1,0.5)
     self.set_label("texture")
     self.callback = None
 
 
-    self.texture = gtk.combo_box_new_text()
+    self.texture = Gtk.ComboBoxText()
     self.texture.append_text('ParentRelative')
     self.texture.append_text('Solid')
     self.texture.append_text('Gradient')
     self.texture.set_active(1)
     self.texture.connect('changed', self.update_texture)
     self.texture.show()
-    textureLabel = gtk.Label('texture')
+    textureLabel = Gtk.Label(label='texture')
     textureLabel.set_alignment(0,0.5)
 
 
-    self.gradient = gtk.combo_box_new_text()
+    self.gradient = Gtk.ComboBoxText()
     self.gradient.append_text('Diagonal')
     self.gradient.append_text('CrossDiagonal')
     self.gradient.append_text('Pyramid')
@@ -1181,42 +1181,42 @@ class TextureFrame(gtk.Frame):
     self.gradient.set_active(5)
     self.gradient.connect('changed', self.update_gradient)
     self.gradient.show()
-    gradientLabel = gtk.Label('gradient')
+    gradientLabel = Gtk.Label(label='gradient')
     gradientLabel.set_alignment(0,0.5)
 
 
     self.color = ColorButton()
     self.color.connect("color-set",self.update_value)
-    colorLabel = gtk.Label('color')
+    colorLabel = Gtk.Label(label='color')
     colorLabel.set_alignment(0,0.5)
 
     self.colorTo = ColorButton()
     self.colorTo.connect("color-set",self.update_value)
-    colorToLabel = gtk.Label('colorTo')
+    colorToLabel = Gtk.Label(label='colorTo')
     colorToLabel.set_alignment(0,0.5)
 
     self.colorSplitTo = ColorButton()
     self.colorSplitTo.connect("color-set",self.update_value)
-    self.colorSplitTo_tb = gtk.CheckButton("color.splitTo")
+    self.colorSplitTo_tb = Gtk.CheckButton("color.splitTo")
     self.colorSplitTo_tb.connect("toggled", self.update_gradient)
     self.colorSplitTo_tb.set_active(False)
     self.colorSplitTo_tb.set_alignment(0,0.5)
 
     self.colorToSplitTo = ColorButton()
     self.colorToSplitTo.connect("color-set",self.update_value)
-    self.colorToSplitTo_tb = gtk.CheckButton("colorTo.splitTo")
+    self.colorToSplitTo_tb = Gtk.CheckButton("colorTo.splitTo")
     self.colorToSplitTo_tb.connect("toggled", self.update_gradient)
     self.colorToSplitTo_tb.set_active(False)
     self.colorToSplitTo_tb.set_alignment(0,0.5)
 
-    self.interlaced = gtk.CheckButton("interlaced")
+    self.interlaced = Gtk.CheckButton("interlaced")
     self.interlaced.connect("toggled", self.update_interlaced)
     self.interlacedColor = ColorButton()
     self.interlacedColor.connect("color-set",self.update_value)
     self.interlacedColor.set_sensitive(False)
 
 
-    colortable = gtk.Table(rows=2,columns=2,homogeneous=False)
+    colortable = Gtk.Table(rows=2,columns=2,homogeneous=False)
     i = 0
     colortable.attach(textureLabel,0,1,i,i+1,FILL,EXPAND,5,0)
     colortable.attach(self.texture,1,2,i,i+1,FILL,EXPAND,0,0)
@@ -1246,53 +1246,53 @@ class TextureFrame(gtk.Frame):
 
 
 
-    self.border = gtk.combo_box_new_text()
+    self.border = Gtk.ComboBoxText()
     self.border.append_text('None')
     self.border.append_text('Flat')
     self.border.append_text('Raised')
     self.border.append_text('Sunken')
     self.border.set_active(2)
     self.border.connect('changed', self.update_border)
-    borderLabel = gtk.Label('border')
+    borderLabel = Gtk.Label(label='border')
     borderLabel.set_alignment(0,0.5)
 
-    self.bevelButton1 = gtk.RadioButton(None,"Bevel1")
-    self.bevelButton2 = gtk.RadioButton(self.bevelButton1,"Bevel2")
+    self.bevelButton1 = Gtk.RadioButton(None,"Bevel1")
+    self.bevelButton2 = Gtk.RadioButton(self.bevelButton1,"Bevel2")
     self.bevelButton1.connect("toggled", self.update_interlaced)
 
 
     self.borderColor = ColorButton()
     self.borderColor.connect("color-set",self.update_value)
-    borderColorLabel = gtk.Label('border color')
+    borderColorLabel = Gtk.Label(label='border color')
     borderColorLabel.set_alignment(0,0.5)
 
-    self.highlight = gtk.Adjustment(128,0,65535,1,256,0)
-    self.shadow = gtk.Adjustment(64,0,256,1,16,0)
+    self.highlight = Gtk.Adjustment(128,0,65535,1,256,0)
+    self.shadow = Gtk.Adjustment(64,0,256,1,16,0)
     self.highlight.connect("value_changed", self.update_value)
     self.shadow.connect("value_changed", self.update_value)
 
 
-    self.highlightButton = gtk.SpinButton(self.highlight,0,0)
+    self.highlightButton = Gtk.SpinButton(self.highlight,0,0)
     self.highlightButton.set_numeric(True)
     self.highlightButton.set_digits(0)
-    highlightLabel = gtk.Label('highlight')
+    highlightLabel = Gtk.Label(label='highlight')
     highlightLabel.set_alignment(0,0.5)
 
-    self.shadowButton = gtk.SpinButton(self.shadow,0,0)
+    self.shadowButton = Gtk.SpinButton(self.shadow,0,0)
     self.shadowButton.set_numeric(True)
     self.shadowButton.set_digits(0)
-    shadowLabel = gtk.Label('shadow')
+    shadowLabel = Gtk.Label(label='shadow')
     shadowLabel.set_alignment(0,0.5)
 
 
 
-    reset = gtk.Button(label="reset")
+    reset = Gtk.Button(label="reset")
     reset.set_alignment(0.5,0.5)
     reset.connect("clicked",self.reset)
 
 
 
-    bordertable = gtk.Table(rows=2,columns=2,homogeneous=False)
+    bordertable = Gtk.Table(rows=2,columns=2,homogeneous=False)
     i = 0
     bordertable.attach(borderLabel,0,1,i,i+1,FILL,EXPAND,5,0)
     bordertable.attach(self.border,1,2,i,i+1,FILL,EXPAND,0,0)
@@ -1317,7 +1317,7 @@ class TextureFrame(gtk.Frame):
 
 
 
-    hbox = gtk.HBox(False,5)
+    hbox = Gtk.HBox(False,5)
     hbox.pack_start(colortable,False,False,5)
     hbox.pack_start(bordertable,False,False,5)
     hbox.show()
@@ -1330,7 +1330,7 @@ class TextureFrame(gtk.Frame):
 ########## Color Frame ##########
 #################################
 
-class ColorFrame(gtk.Frame):
+class ColorFrame(Gtk.Frame):
 
   def update_value(self,*args):
     if self.callback and self.sensitive:
@@ -1342,8 +1342,8 @@ class ColorFrame(gtk.Frame):
     self.sensitive = True
 
   def __init__(self,**args):
-    gtk.Frame.__init__(self,**args)
-    self.set_shadow_type(gtk.SHADOW_NONE)
+    GObject.GObject.__init__(self,**args)
+    self.set_shadow_type(Gtk.ShadowType.NONE)
     self.set_label_align(1,0.5)
     self.set_label("color")
     self.callback = None
@@ -1362,7 +1362,7 @@ class ColorFrame(gtk.Frame):
 ########## Text Shadows String Frame ##########
 ###############################################
 
-class TextShadowStringFrame(gtk.Frame):
+class TextShadowStringFrame(Gtk.Frame):
   def update_value(self,*args):
     if self.shadow.get_active():
      self.value = "shadow=y:shadowtint=%d:shadowoffset=%d" % (self.shadowtint.get_value(), self.shadowoffset.get_value())
@@ -1408,8 +1408,8 @@ class TextShadowStringFrame(gtk.Frame):
     return self.value
 
   def __init__(self,**args):
-    gtk.Frame.__init__(self,**args)
-    self.set_shadow_type(gtk.SHADOW_NONE)
+    GObject.GObject.__init__(self,**args)
+    self.set_shadow_type(Gtk.ShadowType.NONE)
     self.set_label_align(1,0.5)
     self.set_label("text shadow")
     self.callback = None
@@ -1418,32 +1418,32 @@ class TextShadowStringFrame(gtk.Frame):
     self.default_tint = 50
     self.default_offset = 1
 
-    self.display = gtk.Entry(max=0)
+    self.display = Gtk.Entry(max=0)
     self.display.set_editable(False)
 
-    self.shadow = gtk.CheckButton("on/off")
+    self.shadow = Gtk.CheckButton("on/off")
     self.shadow.connect("toggled", self.update_value, "check button 1")
 
-    self.shadowtint = gtk.Adjustment(self.default_tint,-100,100,1,1,0)
+    self.shadowtint = Gtk.Adjustment(self.default_tint,-100,100,1,1,0)
     self.shadowtint.connect("value_changed", self.update_value)
-    shadowtint_label = gtk.Label("shadow tint:")
+    shadowtint_label = Gtk.Label(label="shadow tint:")
     shadowtint_label.set_alignment(0,0)
-    shadowtint_spin = gtk.SpinButton(self.shadowtint,0,0)
+    shadowtint_spin = Gtk.SpinButton(self.shadowtint,0,0)
     shadowtint_spin.set_numeric(True)
     shadowtint_spin.set_digits(0)
 
-    self.shadowoffset = gtk.Adjustment(self.default_offset,-2,2,1,1,0)
+    self.shadowoffset = Gtk.Adjustment(self.default_offset,-2,2,1,1,0)
     self.shadowoffset.connect("value_changed", self.update_value)
-    shadowoffset_label = gtk.Label("shadow offset:")
+    shadowoffset_label = Gtk.Label(label="shadow offset:")
     shadowoffset_label.set_alignment(0,0)
-    shadowoffset_spin = gtk.SpinButton(self.shadowoffset,0,0)
+    shadowoffset_spin = Gtk.SpinButton(self.shadowoffset,0,0)
     shadowoffset_spin.set_numeric(True)
     shadowoffset_spin.set_digits(0)
 
-    reset = gtk.Button(label="reset")
+    reset = Gtk.Button(label="reset")
     reset.connect("clicked",self.reset)
 
-    table = gtk.Table(2,2)
+    table = Gtk.Table(2,2)
     i=0
     table.attach(self.display,0,2,i,i+1,FILL,EXPAND,5,5)
     i+=1
@@ -1501,7 +1501,7 @@ class Theme():
               theme = self.parse_element(match + suffix,value,theme)
               glob_was_successful = True
           if not glob_was_successful:
-            print "Warning: failed to match globbing pattern: " + name
+            print ("Warning: failed to match globbing pattern: " + name)
         else:
           theme = self.parse_element(name,value,theme)
     f.close()
@@ -1529,7 +1529,7 @@ class Theme():
         else:
           theme[texture] = "%s: %s" %(texture_attr,value)
         return theme
-    print "Warning: ignoring unrecognized theme element \"%s\"" % name
+    print ("Warning: ignoring unrecognized theme element \"%s\"" % name)
     return theme
 
 
@@ -1657,7 +1657,7 @@ class Theme():
 ########## Theme Element Selector ##########
 ############################################
 
-class ThemeElementSelector(gtk.ScrolledWindow):
+class ThemeElementSelector(Gtk.ScrolledWindow):
   def select(self,listview,*args):
     selection = listview.get_selection()
     (model,iter) = selection.get_selected()
@@ -1667,24 +1667,24 @@ class ThemeElementSelector(gtk.ScrolledWindow):
 
 
   def __init__(self,**args):
-    gtk.ScrolledWindow.__init__(self,**args)
-    self.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+    GObject.GObject.__init__(self,**args)
+    self.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
     self.callback = None
 
-    self.liststore = gtk.ListStore(str,str)
+    self.liststore = Gtk.ListStore(str,str)
     elements = themeElements.keys()
     elements.sort()
     for element in elements:
       self.liststore.append([element,themeElements[element]['type']])
 
-    self.listview = gtk.TreeView(self.liststore)
+    self.listview = Gtk.TreeView(self.liststore)
     self.listview.set_rules_hint(True)
     self.listview.connect('cursor-changed', self.select, self.listview)
 
     i = 0
     for col in ('element','type'):
-      tvcol = gtk.TreeViewColumn(col)
-      cell = gtk.CellRendererText()
+      tvcol = Gtk.TreeViewColumn(col)
+      cell = Gtk.CellRendererText()
       tvcol.pack_start(cell, True)
       tvcol.add_attribute(cell, 'text', i)
       tvcol.set_sort_column_id(i)
@@ -1703,10 +1703,10 @@ class ThemeElementSelector(gtk.ScrolledWindow):
 ########## Theme File Selector ##########
 #########################################
 
-class ThemeFileSelector(gtk.ScrolledWindow):
+class ThemeFileSelector(Gtk.ScrolledWindow):
 
   def select(self,treeview,event):
-    if event.type == gtk.gdk._2BUTTON_PRESS:
+    if event.type == Gdk._2BUTTON_PRESS:
       x = int(event.x)
       y = int(event.y)
       time = event.time
@@ -1752,27 +1752,27 @@ class ThemeFileSelector(gtk.ScrolledWindow):
 
 
   def __init__(self,**args):
-    gtk.ScrolledWindow.__init__(self,**args)
-    self.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+    GObject.GObject.__init__(self,**args)
+    self.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
     self.themes = self.get_themes()
     self.selected = None
     self.callback = None
 
-    self.liststore = gtk.ListStore(str,str)
+    self.liststore = Gtk.ListStore(str,str)
     names = self.themes.keys()
     names.sort()
     for name in names:
       self.liststore.append([name,self.themes[name]])
 
-    self.listview = gtk.TreeView(self.liststore)
+    self.listview = Gtk.TreeView(self.liststore)
     #self.listview.set_rules_hint(True)
     #self.listview.connect('cursor-changed', self.get_selected, self.listview)
     self.listview.connect('button_press_event', self.select)
 
     i = 0
     for col in ('theme','path'):
-      tvcol = gtk.TreeViewColumn(col)
-      cell = gtk.CellRendererText()
+      tvcol = Gtk.TreeViewColumn(col)
+      cell = Gtk.CellRendererText()
       tvcol.pack_start(cell, True)
       tvcol.add_attribute(cell, 'text', i)
       tvcol.set_sort_column_id(i)
@@ -1791,11 +1791,11 @@ class ThemeFileSelector(gtk.ScrolledWindow):
 ########## Palette ##########
 #############################
 
-class Palette(gtk.Frame):
+class Palette(Gtk.Frame):
 
   def __init__(self,theme,*args):
-    gtk.Frame.__init__(self,*args)
-    self.set_shadow_type(gtk.SHADOW_NONE)
+    GObject.GObject.__init__(self,*args)
+    self.set_shadow_type(Gtk.ShadowType.NONE)
     self.set_label_align(1,0.5)
     self.set_label("palette")
 
@@ -1808,26 +1808,26 @@ class Palette(gtk.Frame):
     self.theme = theme
     self.swatch_dim = 25
 
-    self.area = gtk.DrawingArea()
-    self.area.set_events(gtk.gdk.EXPOSURE_MASK | gtk.gdk.BUTTON_PRESS_MASK)
+    self.area = Gtk.DrawingArea()
+    self.area.set_events(Gdk.EventMask.EXPOSURE_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
     self.area.connect("expose_event", self.expose)
     self.area.connect("button_press_event", self.button_press)
     self.area.drag_dest_set(0,[],0)
-    self.area.drag_source_set(gtk.gdk.BUTTON1_MASK,[],0)
+    self.area.drag_source_set(Gdk.ModifierType.BUTTON1_MASK,[],0)
     self.area.connect("drag_motion", self.drag_motion)
     self.area.connect("drag_drop", self.drag_drop)
     self.area.connect("drag_begin", self.drag_begin)
     self.area.connect("drag_data_get", self.drag_data_get)
 
 
-    self.sw = gtk.ScrolledWindow()
-    self.sw.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+    self.sw = Gtk.ScrolledWindow()
+    self.sw.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
     self.sw.add_with_viewport(self.area)
     self.area.show()
 
-    self.menu = gtk.Menu()
+    self.menu = Gtk.Menu()
     self.menu.set_title('Palette')
-    menu_simplify = gtk.ImageMenuItem('_Simplify')
+    menu_simplify = Gtk.ImageMenuItem('_Simplify')
     self.menu.append(menu_simplify)
     menu_simplify.connect('activate',self.simplify)
     menu_simplify.show()
@@ -1904,11 +1904,11 @@ class Palette(gtk.Frame):
 
   def get_color(self,default='#000000'):
     if self.colorseldlg == None:
-      self.colorseldlg = gtk.ColorSelectionDialog("choose a replacement color")
+      self.colorseldlg = Gtk.ColorSelectionDialog("choose a replacement color")
     colorsel = self.colorseldlg.colorsel
     colorsel.set_current_color(str_to_color(default))
     response = self.colorseldlg.run()
-    if response -- gtk.RESPONSE_OK:
+    if response -- Gtk.ResponseType.OK:
       new_color = color_to_str(colorsel.get_current_color())
     else:
       new_color = None
@@ -1918,7 +1918,7 @@ class Palette(gtk.Frame):
   def button_press(self,area,event):
     if event.button == 1:
       self.selected = self.map_swatch(event.x,event.y)
-      if event.type == gtk.gdk._2BUTTON_PRESS:
+      if event.type == Gdk._2BUTTON_PRESS:
         if self.selected:
           new_color = self.get_color(self.selected)
           if new_color != None and new_color != self.selected:
@@ -1932,11 +1932,11 @@ class Palette(gtk.Frame):
     return self.selected
 
   def drag_color(self, widget, context, selection, info, time):
-    #context.drag_status(gtk.gdk.ACTION_COPY, time)
+    #context.drag_status(Gdk.DragAction.COPY, time)
     return True
 
   def drag_motion(self, widget, context, x, y, time):
-    context.drag_status(gtk.gdk.ACTION_COPY, time)
+    context.drag_status(Gdk.DragAction.COPY, time)
     return True
 
   def drag_drop(self, widget, context, x, y, time):
@@ -1964,7 +1964,7 @@ class Palette(gtk.Frame):
     return True
 
   def drag_begin(self, widget, context, *args):
-    #context.drag_status(gtk.gdk.ACTION_COPY, time)
+    #context.drag_status(Gdk.DragAction.COPY, time)
     return True
 
   def drag_data_get(self, widget, context, x, y, time):
@@ -2024,10 +2024,10 @@ class ObTheme:
   def display_about(self,*args):
     about_msg = "ObTheme %s\n\n GTK+ Openbox theme editor \n\nCopyright \302\251 2009 Xyne " % VERSION
 
-    label = gtk.Label(about_msg)
-    label.set_justify(gtk.JUSTIFY_CENTER)
+    label = Gtk.Label(label=about_msg)
+    label.set_justify(Gtk.Justification.CENTER)
 
-    dialog = gtk.Dialog(None,None,gtk.DIALOG_DESTROY_WITH_PARENT,('_Close',1))
+    dialog = Gtk.Dialog(None,None,Gtk.DialogFlags.DESTROY_WITH_PARENT,('_Close',1))
     dialog.set_title("About ObTheme")
     dialog.vbox.pack_start(label,False,True,10)
     dialog.vbox.show_all()
@@ -2058,18 +2058,18 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
 '''
 
 
-    textview = gtk.TextView()
+    textview = Gtk.TextView()
     textview.get_buffer().set_text(help_msg)
     textview.set_editable(False)
-    textview.set_wrap_mode(gtk.WRAP_WORD)
+    textview.set_wrap_mode(Gtk.WrapMode.WORD)
     textview.set_left_margin(5)
     textview.set_right_margin(5)
 
-    textview_window = gtk.ScrolledWindow()
-    textview_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+    textview_window = Gtk.ScrolledWindow()
+    textview_window.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
     textview_window.add(textview)
 
-    dialog = gtk.Dialog(None,None,gtk.DIALOG_DESTROY_WITH_PARENT,('_Close',1))
+    dialog = Gtk.Dialog(None,None,Gtk.DialogFlags.DESTROY_WITH_PARENT,('_Close',1))
     dialog.set_title("ObTheme Info")
     dialog.set_default_size(600,500)
     dialog.vbox.pack_start(textview_window,True,True,5)
@@ -2124,8 +2124,8 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
 
   def delete_event(self, widget, event, data=None):
     if self.unsaved:
-      label = gtk.Label("Would you like to save the theme file?")
-      dialog = gtk.Dialog(None,None,gtk.DIALOG_DESTROY_WITH_PARENT,('Discard',0,'Cancel',1,'Save',2))
+      label = Gtk.Label(label="Would you like to save the theme file?")
+      dialog = Gtk.Dialog(None,None,Gtk.DialogFlags.DESTROY_WITH_PARENT,('Discard',0,'Cancel',1,'Save',2))
       dialog.vbox.pack_start(label,True,True,5)
       label.show()
       response = dialog.run()
@@ -2140,9 +2140,9 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
 
   def install(self,widget,arg=None,*args):
     if arg == 'install as':
-      label = gtk.Label("Choose a name for this theme.")
-      entry = gtk.Entry()
-      dialog = gtk.Dialog(None,None,gtk.DIALOG_DESTROY_WITH_PARENT,('Cancel',0,'Install',1))
+      label = Gtk.Label(label="Choose a name for this theme.")
+      entry = Gtk.Entry()
+      dialog = Gtk.Dialog(None,None,Gtk.DialogFlags.DESTROY_WITH_PARENT,('Cancel',0,'Install',1))
       dialog.vbox.pack_start(label,True,True,5)
       dialog.vbox.pack_start(entry,True,True,5)
       dialog.vbox.show_all()
@@ -2157,7 +2157,7 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
       dialog.destroy()
 
   def destroy(self, widget, data=None):
-    gtk.main_quit()
+    Gtk.main_quit()
 
   def set_title(self,title=None,*args):
     if title:
@@ -2173,13 +2173,13 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
 
   def open_theme(self,widget,arg=None,*args):
     name = self.file_name
-    dialog = gtk.FileChooserDialog('Select an Openbox theme file',None,gtk.FILE_CHOOSER_ACTION_OPEN,
-     (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+    dialog = Gtk.FileChooserDialog('Select an Openbox theme file',None,Gtk.FileChooserAction.OPEN,
+     (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
     if name != None:
       dialog.set_current_folder(os.path.dirname(name))
-    dialog.set_default_response(gtk.RESPONSE_OK)
+    dialog.set_default_response(Gtk.ResponseType.OK)
     response = dialog.run()
-    if response == gtk.RESPONSE_OK:
+    if response == Gtk.ResponseType.OK:
       name = dialog.get_filename()
     else:
       name = None
@@ -2201,17 +2201,17 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     name = self.file_name
     if name == None or arg == 'save as':
       if arg == 'save as':
-        button = gtk.STOCK_SAVE_AS
+        button = Gtk.STOCK_SAVE_AS
       else:
-        button = gtk.STOCK_SAVE
-      dialog = gtk.FileChooserDialog('Select an Openbox theme file',None,gtk.FILE_CHOOSER_ACTION_SAVE,
-       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, button, gtk.RESPONSE_OK))
+        button = Gtk.STOCK_SAVE
+      dialog = Gtk.FileChooserDialog('Select an Openbox theme file',None,Gtk.FileChooserAction.SAVE,
+       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, button, Gtk.ResponseType.OK))
       if name != None:
         dialog.set_current_folder(os.path.dirname(name))
         dialog.set_current_name(os.path.basename(name))
-      dialog.set_default_response(gtk.RESPONSE_OK)
+      dialog.set_default_response(Gtk.ResponseType.OK)
       response = dialog.run()
-      if response == gtk.RESPONSE_OK:
+      if response == Gtk.ResponseType.OK:
         name = dialog.get_filename()
       dialog.destroy()
     if name != None:
@@ -2252,7 +2252,7 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
         self.previous_theme = prev_theme
       rc_xml = m.group(1) + theme + m.group(3)
       if write_file(self.openbox_config_path,rc_xml):
-        print "changed theme in rc.xml: %s -> %s" % (prev_theme,theme)
+        print ("changed theme in rc.xml: %s -> %s" % (prev_theme,theme))
         self.reconfigure()
         return True
     sys.stderr.write("unable to parse theme element of %s\n" % rc_xml_path)
@@ -2301,13 +2301,13 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
 
 
   def __init__(self):
-    self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    self.window = Gtk.Window(Gtk.WindowType.TOPLEVEL)
     self.window.set_title("ObTheme")
     self.window.connect("destroy", self.destroy)
     self.window.connect("delete_event", self.delete_event)
-    self.window.set_position(gtk.WIN_POS_CENTER)
+    self.window.set_position(Gtk.WindowPosition.CENTER)
 
-    accel_group = gtk.AccelGroup()
+    accel_group = Gtk.AccelGroup()
     self.window.add_accel_group(accel_group)
 
     self.preview_themerc_dir = os.getenv('HOME') + '/.themes/obtheme/openbox-3'
@@ -2327,39 +2327,39 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     self.preview_mode = False
     self.themerc = None
 
-    file_menu_open = gtk.ImageMenuItem('_Open...')
+    file_menu_open = Gtk.ImageMenuItem('_Open...')
     file_menu_open.connect("activate", self.open_theme,'open')
-    file_menu_open.add_accelerator("activate",accel_group,ord('o'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    file_menu_open.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU))
+    file_menu_open.add_accelerator("activate",accel_group,ord('o'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    file_menu_open.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_OPEN, Gtk.IconSize.MENU))
 
-    file_menu_save = gtk.ImageMenuItem('_Save')
+    file_menu_save = Gtk.ImageMenuItem('_Save')
     file_menu_save.connect("activate", self.save_theme,'save')
-    file_menu_save.add_accelerator("activate",accel_group,ord('s'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    file_menu_save.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE, gtk.ICON_SIZE_MENU))
+    file_menu_save.add_accelerator("activate",accel_group,ord('s'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    file_menu_save.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_SAVE, Gtk.IconSize.MENU))
 
-    file_menu_save_as = gtk.ImageMenuItem('Save _As...')
+    file_menu_save_as = Gtk.ImageMenuItem('Save _As...')
     file_menu_save_as.connect("activate", self.save_theme,'save as')
-    file_menu_save_as.add_accelerator("activate",accel_group,ord('s'),(gtk.gdk.CONTROL_MASK|gtk.gdk.SHIFT_MASK),gtk.ACCEL_VISIBLE)
-    file_menu_save_as.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+    file_menu_save_as.add_accelerator("activate",accel_group,ord('s'),(Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK),Gtk.AccelFlags.VISIBLE)
+    file_menu_save_as.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_SAVE_AS, Gtk.IconSize.MENU))
 
-    #file_menu_install_as = gtk.ImageMenuItem('Install As...')
+    #file_menu_install_as = Gtk.ImageMenuItem('Install As...')
     #file_menu_install_as.connect("activate", self.install,'install as')
-    #file_menu_install_as.add_accelerator("activate",accel_group,ord('i'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    #file_menu_install_as.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+    #file_menu_install_as.add_accelerator("activate",accel_group,ord('i'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    #file_menu_install_as.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_SAVE_AS, Gtk.IconSize.MENU))
 
-    #file_menu_import = gtk.ImageMenuItem('_Import...')
+    #file_menu_import = Gtk.ImageMenuItem('_Import...')
     #file_menu_import.connect("activate", self.open_theme, 'import')
-    #file_menu_import.add_accelerator("activate",accel_group,ord('i'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    #file_menu_import.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+    #file_menu_import.add_accelerator("activate",accel_group,ord('i'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    #file_menu_import.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_SAVE_AS, Gtk.IconSize.MENU))
 
-    file_menu_separator = gtk.SeparatorMenuItem()
+    file_menu_separator = Gtk.SeparatorMenuItem()
 
-    file_menu_quit = gtk.ImageMenuItem("_Quit")
-    file_menu_quit.connect("activate", gtk.main_quit)
-    file_menu_quit.add_accelerator("activate",accel_group,ord('q'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    file_menu_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
+    file_menu_quit = Gtk.ImageMenuItem("_Quit")
+    file_menu_quit.connect("activate", Gtk.main_quit)
+    file_menu_quit.add_accelerator("activate",accel_group,ord('q'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    file_menu_quit.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_QUIT, Gtk.IconSize.MENU))
 
-    file_submenu = gtk.Menu()
+    file_submenu = Gtk.Menu()
     file_submenu.append(file_menu_open)
     file_submenu.append(file_menu_save)
     file_submenu.append(file_menu_save_as)
@@ -2369,70 +2369,70 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     file_submenu.append(file_menu_quit)
     file_submenu.show_all()
 
-    file_menu = gtk.ImageMenuItem("_File")
+    file_menu = Gtk.ImageMenuItem("_File")
     file_menu.set_submenu(file_submenu)
     file_menu.show()
 
-    theme_menu_import = gtk.ImageMenuItem('_Import...')
+    theme_menu_import = Gtk.ImageMenuItem('_Import...')
     theme_menu_import.connect("activate", self.open_theme, 'import')
-    theme_menu_import.add_accelerator("activate",accel_group,ord('i'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    #theme_menu_import.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
+    theme_menu_import.add_accelerator("activate",accel_group,ord('i'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    #theme_menu_import.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_REVERT_TO_SAVED, Gtk.IconSize.MENU))
 
-    theme_menu_preview = gtk.CheckMenuItem('_Preview')
+    theme_menu_preview = Gtk.CheckMenuItem('_Preview')
     theme_menu_preview.connect("toggled", self.toggle_preview_mode)
-    theme_menu_preview.add_accelerator("activate",accel_group,ord('p'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    #theme_menu_preview.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
+    theme_menu_preview.add_accelerator("activate",accel_group,ord('p'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    #theme_menu_preview.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_REVERT_TO_SAVED, Gtk.IconSize.MENU))
     self.preview_mode_checkbox = theme_menu_preview
 
-    #theme_menu_restore = gtk.ImageMenuItem('_Restore')
+    #theme_menu_restore = Gtk.ImageMenuItem('_Restore')
     #theme_menu_restore.connect("activate", self.restore)
-    #theme_menu_restore.add_accelerator("activate",accel_group,ord('r'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    #theme_menu_restore.set_image(gtk.image_new_from_stock(gtk.STOCK_REVERT_TO_SAVED, gtk.ICON_SIZE_MENU))
+    #theme_menu_restore.add_accelerator("activate",accel_group,ord('r'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    #theme_menu_restore.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_REVERT_TO_SAVED, Gtk.IconSize.MENU))
 
-    theme_submenu = gtk.Menu()
+    theme_submenu = Gtk.Menu()
     theme_submenu.append(theme_menu_import)
     theme_submenu.append(theme_menu_preview)
     #theme_submenu.append(theme_menu_restore)
     theme_submenu.show_all()
 
-    theme_menu = gtk.ImageMenuItem("_Theme")
+    theme_menu = Gtk.ImageMenuItem("_Theme")
     theme_menu.set_submenu(theme_submenu)
     theme_menu.show()
 
-    info_menu = gtk.ImageMenuItem('_Info')
+    info_menu = Gtk.ImageMenuItem('_Info')
     info_menu.connect("activate", self.display_help)
-    info_menu.add_accelerator("activate",accel_group,ord('h'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    info_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_MENU))
+    info_menu.add_accelerator("activate",accel_group,ord('h'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    info_menu.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_INFO, Gtk.IconSize.MENU))
 
-    about_menu = gtk.ImageMenuItem('_About')
+    about_menu = Gtk.ImageMenuItem('_About')
     about_menu.connect("activate", self.display_about)
-    #about_menu.add_accelerator("activate",accel_group,ord('h'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    about_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+    #about_menu.add_accelerator("activate",accel_group,ord('h'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    about_menu.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_ABOUT, Gtk.IconSize.MENU))
 
-    help_submenu = gtk.Menu()
+    help_submenu = Gtk.Menu()
     help_submenu.append(info_menu)
     help_submenu.append(about_menu)
     help_submenu.show_all()
 
-    help_menu = gtk.ImageMenuItem("_Help")
+    help_menu = Gtk.ImageMenuItem("_Help")
     help_menu.set_submenu(help_submenu)
     help_menu.show()
 
-    xbm_menu = gtk.ImageMenuItem('_XBM Editor')
+    xbm_menu = Gtk.ImageMenuItem('_XBM Editor')
     xbm_menu.connect("activate", self.open_xbm_editor)
     #xbm_menu.connect("activate", os.system('python xbm-editor'))
-    xbm_menu.add_accelerator("activate",accel_group,ord('x'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    #xbm_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+    xbm_menu.add_accelerator("activate",accel_group,ord('x'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    #xbm_menu.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_ABOUT, Gtk.IconSize.MENU))
 
-    tools_submenu = gtk.Menu()
+    tools_submenu = Gtk.Menu()
     tools_submenu.append(xbm_menu)
     tools_submenu.show_all()
 
-    tools_menu = gtk.ImageMenuItem("Too_ls")
+    tools_menu = Gtk.ImageMenuItem("Too_ls")
     tools_menu.set_submenu(tools_submenu)
     tools_menu.show()
 
-    menu_bar = gtk.MenuBar()
+    menu_bar = Gtk.MenuBar()
     menu_bar.append(file_menu)
     menu_bar.append(theme_menu)
     menu_bar.append(tools_menu)
@@ -2462,12 +2462,12 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     texture.callback=self.update
 
 
-    infopanel = gtk.ScrolledWindow()
-    infopanel.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-    infolabel = gtk.Label(' information:')
+    infopanel = Gtk.ScrolledWindow()
+    infopanel.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
+    infolabel = Gtk.Label(label=' information:')
     infolabel.set_alignment(0,1)
-    self.info = gtk.TextView()
-    self.info.set_wrap_mode(gtk.WRAP_WORD)
+    self.info = Gtk.TextView()
+    self.info.set_wrap_mode(Gtk.WrapMode.WORD)
     self.info.set_left_margin(5)
     self.info.set_right_margin(5)
     self.info.set_size_request(400,50)
@@ -2480,18 +2480,18 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     themelist.callback = self.open_from_list
 
 
-    hpane = gtk.HPaned()
+    hpane = Gtk.HPaned()
     hpane.add1(theme_element_selector)
     hpane.add2(themelist)
     hpane.show_all()
 
-    vpane = gtk.VPaned()
+    vpane = Gtk.VPaned()
     vpane.add1(infopanel)
     vpane.add2(hpane)
     vpane.show_all()
 
 
-    table = gtk.Table(rows=7,columns=4,homogeneous=False)
+    table = Gtk.Table(rows=7,columns=4,homogeneous=False)
     i = 0
     j = 0
     table.attach(integer,i,i+2,j,j+1)
@@ -2508,13 +2508,13 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
     table.show_all()
 
 
-    hbox = gtk.HBox()
+    hbox = Gtk.HBox()
     hbox.pack_start(table,False,False,2)
     hbox.pack_start(self.theme.palette,True,True,2)
     hbox.show_all()
 
 
-    vbox = gtk.VBox()
+    vbox = Gtk.VBox()
     vbox.pack_start(menu_bar,False,False,2)
     vbox.pack_start(hbox,False,False,2)
     vbox.pack_start(infolabel,False,False,2)
@@ -2542,7 +2542,7 @@ Review the Openbox theme specification at http://openbox.org/wiki/Help:Themes fo
       return False
 
   def main(self):
-    gtk.main()
+    Gtk.main()
 
   #def open_xbm_editor(self,*args):
   #  editor = XBMWindow()
@@ -2561,7 +2561,7 @@ def start_fuse(fuse_obj,path):
 
 class MyStat(Stat):
   def __init__(self):
-    self.st_mode = stat.S_IFDIR | 0755
+    self.st_mode = stat.S_IFDIR | 0o755
     self.st_ino = 0
     self.st_dev = 0
     self.st_nlink = 2
@@ -2593,7 +2593,7 @@ class SimpleDir(Fuse):
     if path == '/':
        pass
     elif self.files.has_key(path[1:]):
-       st.st_mode = stat.S_IFREG | 0666
+       st.st_mode = stat.S_IFREG | 0o666
        st.st_nlink = 1
        st.st_size = len(self.files[path[1:]])
     else:
@@ -2696,7 +2696,7 @@ class SimpleDir(Fuse):
 ########## XBM Editor ##########
 ################################
 
-class XBMEditor(gtk.Frame):
+class XBMEditor(Gtk.Frame):
 
   def xbm_data_to_bool_array(self,data,width):
     bin_str = ''
@@ -2835,8 +2835,8 @@ class XBMEditor(gtk.Frame):
     self.set_size()
 
   def __init__(self,*args):
-    gtk.Frame.__init__(self,*args)
-    self.set_shadow_type(gtk.SHADOW_NONE)
+    GObject.GObject.__init__(self,*args)
+    self.set_shadow_type(Gtk.ShadowType.NONE)
     #self.set_label_align(1,0.5)
     #self.set_label("xbm editor")
 
@@ -2874,17 +2874,17 @@ class XBMEditor(gtk.Frame):
 
 
 
-    self.area = gtk.DrawingArea()
+    self.area = Gtk.DrawingArea()
     self.area.show()
-    self.area.set_events(gtk.gdk.EXPOSURE_MASK | gtk.gdk.BUTTON_PRESS_MASK)
+    self.area.set_events(Gdk.EventMask.EXPOSURE_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
     self.area.connect("expose_event", self.draw_xbm)
     self.area.connect("button_press_event", self.button_press)
     self.area.connect("motion_notify_event", self.motion_notify)
-    self.area.set_events(gtk.gdk.EXPOSURE_MASK
-                            | gtk.gdk.BUTTON_PRESS_MASK
-                            | gtk.gdk.LEAVE_NOTIFY_MASK
-                            | gtk.gdk.POINTER_MOTION_MASK
-                            | gtk.gdk.POINTER_MOTION_HINT_MASK)
+    self.area.set_events(Gdk.EventMask.EXPOSURE_MASK
+                            | Gdk.EventMask.BUTTON_PRESS_MASK
+                            | Gdk.EventMask.LEAVE_NOTIFY_MASK
+                            | Gdk.EventMask.POINTER_MOTION_MASK
+                            | Gdk.EventMask.POINTER_MOTION_HINT_MASK)
 
     self.area.set_size_request(240, 240)
 
@@ -2958,12 +2958,12 @@ class XBMEditor(gtk.Frame):
     else:
       x = event.x
       y = event.y
-      state = event.state
+      state = event.get_state()
     i = self.get_index(x,y)
     if i in range(self.size) and self.is_within_area(x,y):
-      if state & gtk.gdk.BUTTON1_MASK:
+      if state & Gdk.ModifierType.BUTTON1_MASK:
         self.bool_arr[i] = True
-      elif state & gtk.gdk.BUTTON3_MASK:
+      elif state & Gdk.ModifierType.BUTTON3_MASK:
         self.bool_arr[i] = False
       self.draw_xbm()
       if self.callback:
@@ -2980,10 +2980,10 @@ class XBMWindow:
   def display_about(self,*args):
     about_msg = "XBM Editor %s\n\n GTK+ X BitMap editor \n\nCopyright \302\251 2009 Xyne " % VERSION
 
-    label = gtk.Label(about_msg)
-    label.set_justify(gtk.JUSTIFY_CENTER)
+    label = Gtk.Label(label=about_msg)
+    label.set_justify(Gtk.Justification.CENTER)
 
-    dialog = gtk.Dialog(None,None,gtk.DIALOG_DESTROY_WITH_PARENT,('_Close',1))
+    dialog = Gtk.Dialog(None,None,Gtk.DialogFlags.DESTROY_WITH_PARENT,('_Close',1))
     dialog.set_title("About XBM Editor")
     dialog.vbox.pack_start(label,False,True,10)
     dialog.vbox.show_all()
@@ -2998,18 +2998,18 @@ Images will be saved along the themerc file.
 '''
 
 
-    textview = gtk.TextView()
+    textview = Gtk.TextView()
     textview.get_buffer().set_text(help_msg)
     textview.set_editable(False)
-    textview.set_wrap_mode(gtk.WRAP_WORD)
+    textview.set_wrap_mode(Gtk.WrapMode.WORD)
     textview.set_left_margin(5)
     textview.set_right_margin(5)
 
-    textview_window = gtk.ScrolledWindow()
-    textview_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+    textview_window = Gtk.ScrolledWindow()
+    textview_window.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
     textview_window.add(textview)
 
-    dialog = gtk.Dialog(None,None,gtk.DIALOG_DESTROY_WITH_PARENT,('_Close',1))
+    dialog = Gtk.Dialog(None,None,Gtk.DialogFlags.DESTROY_WITH_PARENT,('_Close',1))
     dialog.set_title("XBM Editor Info")
     dialog.set_default_size(300,250)
     dialog.vbox.pack_start(textview_window,True,True,5)
@@ -3019,41 +3019,41 @@ Images will be saved along the themerc file.
 
 
   def __init__(self):
-    self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    self.window = Gtk.Window(Gtk.WindowType.TOPLEVEL)
     self.window.set_title("XBM Editor")
     self.window.connect("destroy", self.destroy)
-    self.window.set_position(gtk.WIN_POS_CENTER)
+    self.window.set_position(Gtk.WindowPosition.CENTER)
     self.file_name = None
     self.unsaved = False
     self.theme_dir = os.getenv('HOME')+'/.themes/obtheme/openbox-3'
     self.callback = None
 
-    accel_group = gtk.AccelGroup()
+    accel_group = Gtk.AccelGroup()
     self.window.add_accel_group(accel_group)
 
-    file_menu_open = gtk.ImageMenuItem('_Open...')
+    file_menu_open = Gtk.ImageMenuItem('_Open...')
     file_menu_open.connect("activate", self.open_xbm,'open')
-    file_menu_open.add_accelerator("activate",accel_group,ord('o'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    file_menu_open.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU))
+    file_menu_open.add_accelerator("activate",accel_group,ord('o'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    file_menu_open.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_OPEN, Gtk.IconSize.MENU))
 
-    file_menu_save = gtk.ImageMenuItem('_Save')
+    file_menu_save = Gtk.ImageMenuItem('_Save')
     file_menu_save.connect("activate", self.save_xbm,'save')
-    file_menu_save.add_accelerator("activate",accel_group,ord('s'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    file_menu_save.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE, gtk.ICON_SIZE_MENU))
+    file_menu_save.add_accelerator("activate",accel_group,ord('s'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    file_menu_save.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_SAVE, Gtk.IconSize.MENU))
 
-    file_menu_save_as = gtk.ImageMenuItem('Save _As...')
+    file_menu_save_as = Gtk.ImageMenuItem('Save _As...')
     file_menu_save_as.connect("activate", self.save_xbm,'save as')
-    file_menu_save_as.add_accelerator("activate",accel_group,ord('s'),(gtk.gdk.CONTROL_MASK|gtk.gdk.SHIFT_MASK),gtk.ACCEL_VISIBLE)
-    file_menu_save_as.set_image(gtk.image_new_from_stock(gtk.STOCK_SAVE_AS, gtk.ICON_SIZE_MENU))
+    file_menu_save_as.add_accelerator("activate",accel_group,ord('s'),(Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK),Gtk.AccelFlags.VISIBLE)
+    file_menu_save_as.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_SAVE_AS, Gtk.IconSize.MENU))
 
-    file_menu_separator = gtk.SeparatorMenuItem()
+    file_menu_separator = Gtk.SeparatorMenuItem()
 
-    file_menu_quit = gtk.ImageMenuItem("_Quit")
-    #file_menu_quit.connect("activate", gtk.main_quit)
-    file_menu_quit.add_accelerator("activate",accel_group,ord('q'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    file_menu_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
+    file_menu_quit = Gtk.ImageMenuItem("_Quit")
+    #file_menu_quit.connect("activate", Gtk.main_quit)
+    file_menu_quit.add_accelerator("activate",accel_group,ord('q'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    file_menu_quit.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_QUIT, Gtk.IconSize.MENU))
 
-    file_submenu = gtk.Menu()
+    file_submenu = Gtk.Menu()
     file_submenu.append(file_menu_open)
     file_submenu.append(file_menu_save)
     file_submenu.append(file_menu_save_as)
@@ -3061,44 +3061,44 @@ Images will be saved along the themerc file.
     file_submenu.append(file_menu_quit)
     file_submenu.show_all()
 
-    file_menu = gtk.ImageMenuItem("_File")
+    file_menu = Gtk.ImageMenuItem("_File")
     file_menu.set_submenu(file_submenu)
     file_menu.show()
 
-    info_menu = gtk.ImageMenuItem('_Info')
+    info_menu = Gtk.ImageMenuItem('_Info')
     info_menu.connect("activate", self.display_help)
-    info_menu.add_accelerator("activate",accel_group,ord('h'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    info_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_MENU))
+    info_menu.add_accelerator("activate",accel_group,ord('h'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    info_menu.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_INFO, Gtk.IconSize.MENU))
 
-    about_menu = gtk.ImageMenuItem('_About')
+    about_menu = Gtk.ImageMenuItem('_About')
     about_menu.connect("activate", self.display_about)
-    #about_menu.add_accelerator("activate",accel_group,ord('h'),gtk.gdk.CONTROL_MASK,gtk.ACCEL_VISIBLE)
-    about_menu.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+    #about_menu.add_accelerator("activate",accel_group,ord('h'),Gdk.ModifierType.CONTROL_MASK,Gtk.AccelFlags.VISIBLE)
+    about_menu.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_ABOUT, Gtk.IconSize.MENU))
 
-    help_submenu = gtk.Menu()
+    help_submenu = Gtk.Menu()
     help_submenu.append(info_menu)
     help_submenu.append(about_menu)
     help_submenu.show_all()
 
-    help_menu = gtk.ImageMenuItem("_Help")
+    help_menu = Gtk.ImageMenuItem("_Help")
     help_menu.set_submenu(help_submenu)
     help_menu.show()
 
 
 
-    menu_bar = gtk.MenuBar()
+    menu_bar = Gtk.MenuBar()
     menu_bar.append(file_menu)
     menu_bar.append(help_menu)
 
-    open_button = gtk.ToolButton(stock_id=gtk.STOCK_OPEN)
-    save_button = gtk.ToolButton(stock_id=gtk.STOCK_SAVE)
-    save_as_button = gtk.ToolButton(stock_id=gtk.STOCK_SAVE_AS)
+    open_button = Gtk.ToolButton(stock_id=Gtk.STOCK_OPEN)
+    save_button = Gtk.ToolButton(stock_id=Gtk.STOCK_SAVE)
+    save_as_button = Gtk.ToolButton(stock_id=Gtk.STOCK_SAVE_AS)
 
     open_button.connect("clicked", self.open_xbm,'open')
     save_button.connect("clicked", self.save_xbm,'save')
     save_as_button.connect("clicked", self.save_xbm, 'save as')
 
-    toolbar = gtk.Toolbar()
+    toolbar = Gtk.Toolbar()
     toolbar.insert(open_button, 0)
     toolbar.insert(save_button, 1)
     toolbar.insert(save_as_button, 2)
@@ -3106,21 +3106,21 @@ Images will be saved along the themerc file.
     editor = XBMEditor()
     editor.callback = self.save_preview
 
-    cm = gtk.Button(label='-')
+    cm = Gtk.Button(label='-')
     cm.connect('clicked',self.col_minus)
-    cl = gtk.Label('cols')
-    cp = gtk.Button(label='+')
+    cl = Gtk.Label(label='cols')
+    cp = Gtk.Button(label='+')
     cp.connect('clicked',self.col_plus)
-    rm = gtk.Button(label='-')
+    rm = Gtk.Button(label='-')
     rm.connect('clicked',self.row_minus)
-    rl = gtk.Label('rows')
-    rp = gtk.Button(label='+')
+    rl = Gtk.Label(label='rows')
+    rp = Gtk.Button(label='+')
     rp.connect('clicked',self.row_plus)
 
     self.cl = cl
     self.rl = rl
 
-    buttonbox = gtk.HBox(True,0)
+    buttonbox = Gtk.HBox(True,0)
     buttonbox.pack_start(cm,True,True,0)
     buttonbox.pack_start(cl,True,True,0)
     buttonbox.pack_start(cp,True,True,0)
@@ -3129,7 +3129,7 @@ Images will be saved along the themerc file.
     buttonbox.pack_start(rp,True,True,0)
     buttonbox.show_all()
 
-    combobox = gtk.combo_box_new_text()
+    combobox = Gtk.ComboBoxText()
     combobox.append_text('')
     combobox.set_active(0)
     imagebutton_list = imageButtons.keys()
@@ -3139,26 +3139,26 @@ Images will be saved along the themerc file.
     combobox.connect('changed', self.load_imagebutton)
     self.combobox = combobox
 
-    default_button = gtk.Button('default')
+    default_button = Gtk.Button('default')
     default_button.connect("clicked", self.remove_image)
 
-    hbox = gtk.HBox(False,0)
+    hbox = Gtk.HBox(False,0)
     hbox.pack_start(combobox,True,True,0)
     hbox.pack_start(default_button,False,False,0)
     hbox.show_all()
 
 
-    infopanel = gtk.ScrolledWindow()
-    infopanel.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-    self.info = gtk.TextView()
-    self.info.set_wrap_mode(gtk.WRAP_WORD)
+    infopanel = Gtk.ScrolledWindow()
+    infopanel.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
+    self.info = Gtk.TextView()
+    self.info.set_wrap_mode(Gtk.WrapMode.WORD)
     self.info.set_left_margin(5)
     self.info.set_right_margin(5)
     self.info.set_size_request(200,40)
     self.info.set_editable(False)
     infopanel.add(self.info)
 
-    box = gtk.VBox(False,0)
+    box = Gtk.VBox(False,0)
     box.pack_start(menu_bar,False,False,0)
     box.pack_start(toolbar, False, False, 0)
     box.pack_start(editor,True,True,0)
@@ -3259,23 +3259,23 @@ Images will be saved along the themerc file.
     self.set_labels()
 
   def open_xbm(self,widget,arg=None,*args):
-    filter_all = gtk.FileFilter()
+    filter_all = Gtk.FileFilter()
     filter_all.set_name("All files")
     filter_all.add_pattern("*")
 
-    filter_xpm = gtk.FileFilter()
+    filter_xpm = Gtk.FileFilter()
     filter_xpm.set_name("XBM")
     filter_xpm.add_pattern("*.xbm")
     name = self.file_name
-    dialog = gtk.FileChooserDialog('Select an XBM file',None,gtk.FILE_CHOOSER_ACTION_OPEN,
-     (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+    dialog = Gtk.FileChooserDialog('Select an XBM file',None,Gtk.FileChooserAction.OPEN,
+     (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
     dialog.add_filter(filter_xpm)
     dialog.add_filter(filter_all)
-    dialog.set_default_response(gtk.RESPONSE_OK)
+    dialog.set_default_response(Gtk.ResponseType.OK)
     if name != None:
       dialog.set_current_folder(os.path.dirname(name))
     response = dialog.run()
-    if response == gtk.RESPONSE_OK:
+    if response == Gtk.ResponseType.OK:
       name = dialog.get_filename()
     else:
       name = None
@@ -3298,16 +3298,16 @@ Images will be saved along the themerc file.
     name = self.file_name
     if name == None or arg == 'save as':
       if arg == 'save as':
-        button = gtk.STOCK_SAVE
+        button = Gtk.STOCK_SAVE
       else:
-        button = gtk.STOCK_SAVE
-      dialog = gtk.FileChooserDialog('Select an XBM file',None,gtk.FILE_CHOOSER_ACTION_SAVE,
-       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, button, gtk.RESPONSE_OK))
-      filter_all = gtk.FileFilter()
+        button = Gtk.STOCK_SAVE
+      dialog = Gtk.FileChooserDialog('Select an XBM file',None,Gtk.FileChooserAction.SAVE,
+       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, button, Gtk.ResponseType.OK))
+      filter_all = Gtk.FileFilter()
       filter_all.set_name("All files")
       filter_all.add_pattern("*")
 
-      filter_xpm = gtk.FileFilter()
+      filter_xpm = Gtk.FileFilter()
       filter_xpm.set_name("XBM")
       filter_xpm.add_pattern("*.xbm")
       dialog.add_filter(filter_xpm)
@@ -3315,9 +3315,9 @@ Images will be saved along the themerc file.
       if name != None:
         dialog.set_current_folder(os.path.dirname(name))
         dialog.set_current_name(os.path.basename(name))
-      dialog.set_default_response(gtk.RESPONSE_OK)
+      dialog.set_default_response(Gtk.ResponseType.OK)
       response = dialog.run()
-      if response == gtk.RESPONSE_OK:
+      if response == Gtk.ResponseType.OK:
         name = dialog.get_filename()
       dialog.destroy()
     if name != None:
@@ -3330,7 +3330,7 @@ Images will be saved along the themerc file.
 
 
   def main(self):
-    gtk.main()
+    Gtk.main()
 
 
 
